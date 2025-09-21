@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import {
   Trash,
   Palette,
@@ -10,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 function BottomControls({ isSynced, rotate, notes, currentPage, onDelete }) {
+  const navigate = useNavigate();
   return (
     <div className="flex justify-between items-center w-full px-3 p-2 absolute bottom-0 left-0 group-hover:bg-gradient-to-t from-[var(--bg-sec)] via-[var(--bg-sec)] to-transparent">
       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -42,7 +44,7 @@ function BottomControls({ isSynced, rotate, notes, currentPage, onDelete }) {
         </Button>
         <Button
           title="Open in full screen"
-          onClick={() => console.log("clicked maximize")}
+          onClick={() => navigate(`/notes/${notes[currentPage]?._id || "new"}`)}
           variant="transparent"
           size="icon"
           className=" hover:bg-[var(--bg-ter)] rounded-full"

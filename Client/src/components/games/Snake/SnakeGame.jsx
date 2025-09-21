@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import $ from "jquery";
 import styles from "./snake.module.css";
 import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const ChevronDown = ({ size = 20, className }) => (
   <svg
@@ -495,13 +496,14 @@ const SnakeGame = () => {
   return (
     <div className={styles.snakeGame}>
       <nav className="px-6 flex items-center justify-between w-full">
-        <button
+        <Button
           onClick={() => window.history.back()}
-          className="flex items-center gap-2 px-3 py-2 text-[txtDim] bg-[var(--bg-ter)] rounded-lg cursor-pointer transition-all duration-200 text-base font-medium hover:bg-ter hover:text-[var(--txt)] shadow-sm"
+          variant="secondary"
+          className="flex items-center gap-2 px-3 py-2 text-[txtDim] bg-[var(--bg-ter)] rounded-lg text-base font-medium hover:bg-ter hover:text-[var(--txt)] shadow-sm"
         >
           <ArrowLeft size={20} />
           <span className="hidden sm:inline">Back</span>
-        </button>
+        </Button>
 
         <div className={styles.hiScore}>High Score: {hiScore}</div>
         {/* REMOVED UNNECESSARY WRAPPER DIVS AND CORRECTED className USAGE */}

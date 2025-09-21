@@ -47,6 +47,7 @@ function App() {
                 />
                 <Route path="games/*" element={<GameRoom />} />
                 <Route path="notes" element={<Notes />} />
+                <Route path="notes/:noteId" element={<Notes />} />
                 <Route path="about" element={<About />} />
                 <Route path="settings/" element={<Settings />} />
                 <Route path="friends" element={<FriendsPage />} />

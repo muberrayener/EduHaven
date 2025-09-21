@@ -6,6 +6,7 @@ import {
   archiveNote,
   createNote,
   deleteNote,
+  deleteNoteImage,
   getAllNotes,
   getArchivedNotes,
   getNoteById,
@@ -107,5 +108,6 @@ router.put(
 );
 
 router.delete("/:id", authMiddleware, deleteNote);
+router.post("/deleteimage", authMiddleware, deleteNoteImage);
 
 export default router;
