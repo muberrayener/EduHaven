@@ -8,10 +8,11 @@ import {
 import { useLeaderboard } from "@/queries/timerQueries";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 const Leaderboard = () => {
   const { userId } = useParams();
+  const location = useLocation();
   const [view, setView] = useState("weekly");
   const [friendsOnly, setFriendsOnly] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
@@ -34,6 +35,9 @@ const Leaderboard = () => {
       console.error("Invalid token", err);
     }
   }, []);
+
+  const highlightedUserId =
+    location.pathname.startsWith("/user/") && userId ? userId : currentUserId;
 
   const handleDropdownClick = (viewType) => setView(viewType);
   const handleFriendsOnlyToggle = () => setFriendsOnly((prev) => !prev);
@@ -161,7 +165,7 @@ const Leaderboard = () => {
               <div
                 key={user.userId}
                 className={`flex items-center justify-between px-5 py-3 rounded-xl transition-all text-sm ${
-                  isCurrentUser
+                  user.userId === highlightedUserId
                     ? "bg-[var(--btn)] text-white"
                     : "hover:bg-[var(--bg-ter)] text-[var(--txt)]"
                 }`}
@@ -212,9 +216,16 @@ const Leaderboard = () => {
       {/* Footer */}
       {currentUser && leaderboard.length > 0 && (
         <div className="mt-6 text-center text-lg font-semibold text-[var(--txt-dim)]">
-          Your Position:{" "}
-          {leaderboard.findIndex((u) => u.userId === currentUserId) + 1} (
-          {formatDuration(currentUser.totalDuration)})
+          {highlightedUserId === currentUserId ? (
+            <>
+              Your Position:{" "}
+              {leaderboard.findIndex((u) => u.userId === currentUserId) + 1} (
+              {formatDuration(currentUser.totalDuration)})
+            </>
+          ) : (
+            leaderboard.find((user) => user.userId === highlightedUserId)
+              .username
+          )}
         </div>
       )}
     </div>
