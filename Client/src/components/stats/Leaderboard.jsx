@@ -8,13 +8,13 @@ import {
 import { useLeaderboard } from "@/queries/timerQueries";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 const Leaderboard = () => {
+  const { userId } = useParams();
   const [view, setView] = useState("weekly");
   const [friendsOnly, setFriendsOnly] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
-  const [selectedUserId, setSelectedUserId] = useState(null);
   const [imageErrorIds, setImageErrorIds] = useState(new Set());
 
   // Replace direct axios call with TanStack Query hook
@@ -172,7 +172,6 @@ const Leaderboard = () => {
                   </div>
                   <Link
                     to={isCurrentUser ? "/stats" : `/user/${user.userId}`}
-                    onClick={() => setSelectedUserId(user.userId)}
                     className="text-center font-semibold flex items-center gap-2"
                   >
                     {/* Show user's profile picture before their name. If the image fails, track the userId in imageErrorIds so we don't retry rendering a broken image. */}
