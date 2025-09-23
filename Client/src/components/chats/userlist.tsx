@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { useFriends } from "@/queries/friendQueries";
+import { useAllUsers } from "@/queries/userQueries"; 
 import { Search, User, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function UserList({ selectedUser, onSelectUser }) {
   const { data: friends, isLoading } = useFriends();
+  const { data: allUsers, isLoading: isUsersLoading } = useAllUsers();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalSearchTerm, setModalSearchTerm] = useState("");
-  const [selectedFriend, setSelectedFriend] = useState(null);
 
   const LoadingSkeleton = () => (
     <div className="space-y-2 min-w-[600px] rounded-2xl overflow-hidden">
@@ -23,7 +24,7 @@ function UserList({ selectedUser, onSelectUser }) {
       ))}
     </div>
   );
-  
+
   const filteredUsers = friends?.filter((friend) => {
     const fullName = `${friend.FirstName || ""} ${friend.LastName || ""}`.toLowerCase();
     const username = friend.Username?.toLowerCase() || "";
@@ -37,10 +38,10 @@ function UserList({ selectedUser, onSelectUser }) {
     );
   });
 
-  const filteredModalUsers = friends?.filter((friend) => {
-    const fullName = `${friend.FirstName || ""} ${friend.LastName || ""}`.toLowerCase();
-    const username = friend.Username?.toLowerCase() || "";
-    const email = friend.Email?.toLowerCase() || "";
+  const filteredModalUsers = (modalSearchTerm ? allUsers : friends)?.filter((user) => {
+    const fullName = `${user.FirstName || ""} ${user.LastName || ""}`.toLowerCase();
+    const username = user.Username?.toLowerCase() || "";
+    const email = user.Email?.toLowerCase() || "";
     const search = modalSearchTerm.toLowerCase();
 
     return (
@@ -50,13 +51,13 @@ function UserList({ selectedUser, onSelectUser }) {
     );
   });
 
-
   const handleStartChatClick = () => {
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setModalSearchTerm(""); // reset search on close
   };
 
   return (
@@ -110,10 +111,9 @@ function UserList({ selectedUser, onSelectUser }) {
             <div
               key={friend._id}
               onClick={() => onSelectUser(friend)}
-              className={`p-2 sm:p-3 lg:p-4 cursor-pointer transition-colors border-b border-gray-200/5 hover:opacity-80 ${selectedUser?._id === friend._id
-                ? "border-l-4 border-l-[var(--btn)]"
-                : ""
-                }`}
+              className={`p-2 sm:p-3 lg:p-4 cursor-pointer transition-colors border-b border-gray-200/5 hover:opacity-80 ${
+                selectedUser?._id === friend._id ? "border-l-4 border-l-[var(--btn)]" : ""
+              }`}
               style={{
                 backgroundColor:
                   selectedUser?._id === friend._id
@@ -122,7 +122,6 @@ function UserList({ selectedUser, onSelectUser }) {
               }}
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                {/* Avatar */}
                 <div className="relative flex-shrink-0">
                   {friend.ProfilePicture ? (
                     <img
@@ -136,8 +135,6 @@ function UserList({ selectedUser, onSelectUser }) {
                     </div>
                   )}
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                     <h3 className="font-medium txt truncate text-xs sm:text-sm lg:text-base">
@@ -149,10 +146,9 @@ function UserList({ selectedUser, onSelectUser }) {
                       {friend.Timestamp}
                     </span>
                   </div>
-
                   <div className="flex items-center justify-between">
                     <p className="text-xs sm:text-sm txt-dim truncate flex-1">
-                      {friend.LastMessage} {/* Add a last message if available */}
+                      {friend.LastMessage}
                     </p>
                   </div>
                 </div>
@@ -162,7 +158,7 @@ function UserList({ selectedUser, onSelectUser }) {
         )}
       </div>
 
-      {/* Modal: Start New Chat */}
+      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div
@@ -171,7 +167,6 @@ function UserList({ selectedUser, onSelectUser }) {
               backgroundColor: "color-mix(in srgb, var(--bg-sec), black 10%)",
             }}
           >
-            {/* Modal Header */}
             <div className="p-2 sm:p-3 lg:p-4 border-b border-gray-200/10 flex justify-between items-center">
               <h3 className="text-lg sm:text-xl font-semibold txt">
                 Start a New Chat
@@ -181,7 +176,6 @@ function UserList({ selectedUser, onSelectUser }) {
               </Button>
             </div>
 
-            {/* Modal Search Bar */}
             <div className="p-2 sm:p-3 lg:p-4 border-b border-gray-200/10 -mt-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 txt-dim" />
@@ -198,9 +192,10 @@ function UserList({ selectedUser, onSelectUser }) {
               </div>
             </div>
 
-            {/* Modal Friends List */}
             <div className="max-h-80 overflow-y-auto">
-              {filteredModalUsers?.length === 0 ? (
+              {isUsersLoading ? (
+                <LoadingSkeleton />
+              ) : filteredModalUsers?.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 txt-disabled">
                   <Users className="w-8 h-8 sm:w-10 sm:h-10 mb-2" />
                   <p className="text-xs sm:text-sm text-center px-2">No users found.</p>
@@ -214,12 +209,8 @@ function UserList({ selectedUser, onSelectUser }) {
                       closeModal();
                     }}
                     className="p-2 sm:p-3 lg:p-4 cursor-pointer transition-colors border-b border-gray-200/5 hover:opacity-80"
-                    style={{
-                      backgroundColor: "transparent",
-                    }}
                   >
                     <div className="flex items-center gap-2 sm:gap-3">
-                      {/* Avatar */}
                       <div className="relative flex-shrink-0">
                         {friend.ProfilePicture ? (
                           <img
@@ -233,8 +224,6 @@ function UserList({ selectedUser, onSelectUser }) {
                           </div>
                         )}
                       </div>
-
-                      {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                           <h3 className="font-medium txt truncate text-xs sm:text-sm lg:text-base">
