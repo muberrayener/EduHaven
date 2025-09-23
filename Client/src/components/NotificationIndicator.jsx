@@ -8,7 +8,7 @@ function NotificationIndicator({ size = 5, visibility = true }) {
 
   return (
     <div
-      className={`h-${size} w-${size} flex justify-center items-center p-2 text-xs rounded-full bg-green-500`}
+      className={`h-${size} w-${size} flex justify-center items-center text-xs rounded-full bg-green-500`}
     >
       {visibility && (
         <span className="flex items-center">
