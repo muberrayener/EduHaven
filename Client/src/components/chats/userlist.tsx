@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 import { useFriends } from "@/queries/friendQueries";
-import { useAllUsers } from "@/queries/userQueries"; 
+import { useAllUsers } from "@/queries/userQueries";
 import { Search, User, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-function UserList({ selectedUser, onSelectUser }) {
+function UserList({ users, selectedUser, onSelectUser }) {
   const { data: friends, isLoading } = useFriends();
   const { data: allUsers, isLoading: isUsersLoading } = useAllUsers();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalSearchTerm, setModalSearchTerm] = useState("");
+  const [selectedFriend, setSelectedFriend] = useState(null);
 
   const LoadingSkeleton = () => (
     <div className="space-y-2 min-w-[600px] rounded-2xl overflow-hidden">
@@ -25,18 +26,9 @@ function UserList({ selectedUser, onSelectUser }) {
     </div>
   );
 
-  const filteredUsers = friends?.filter((friend) => {
-    const fullName = `${friend.FirstName || ""} ${friend.LastName || ""}`.toLowerCase();
-    const username = friend.Username?.toLowerCase() || "";
-    const email = friend.Email?.toLowerCase() || "";
-    const search = searchTerm.toLowerCase();
-
-    return (
-      fullName.includes(search) ||
-      username.includes(search) ||
-      email.includes(search)
-    );
-  });
+  const filteredUsers = users.filter((user) =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const filteredModalUsers = (modalSearchTerm ? allUsers : friends)?.filter((user) => {
     const fullName = `${user.FirstName || ""} ${user.LastName || ""}`.toLowerCase();
@@ -97,36 +89,40 @@ function UserList({ selectedUser, onSelectUser }) {
         </div>
       </div>
 
-      {/* Friends List */}
+      {/* User List */}
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <LoadingSkeleton />
         ) : filteredUsers?.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full txt-disabled">
             <Users className="w-8 h-8 sm:w-12 sm:h-12 mb-2" />
-            <p className="text-xs sm:text-sm text-center px-2">No friends found.</p>
+            <p className="text-xs sm:text-sm text-center px-2">
+              No conversations
+            </p>
           </div>
         ) : (
-          filteredUsers?.map((friend) => (
+          filteredUsers?.map((user) => (
             <div
-              key={friend._id}
-              onClick={() => onSelectUser(friend)}
-              className={`p-2 sm:p-3 lg:p-4 cursor-pointer transition-colors border-b border-gray-200/5 hover:opacity-80 ${
-                selectedUser?._id === friend._id ? "border-l-4 border-l-[var(--btn)]" : ""
-              }`}
+              key={user.id}
+              onClick={() => onSelectUser(user)}
+              className={`p-2 sm:p-3 lg:p-4 cursor-pointer transition-colors border-b border-gray-200/5 hover:opacity-80 ${selectedUser?.id === user.id
+                ? "border-l-4 border-l-[var(--btn)]"
+                : ""
+                }`}
               style={{
                 backgroundColor:
-                  selectedUser?._id === friend._id
+                  selectedUser?.id === user.id
                     ? "color-mix(in srgb, var(--bg-ter), black 15%)"
                     : "transparent",
               }}
             >
+              {/* Avatar */}
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="relative flex-shrink-0">
-                  {friend.ProfilePicture ? (
+                  {user.avatar ? (
                     <img
-                      src={friend.ProfilePicture}
-                      alt={friend.FirstName}
+                      src={user.avatar}
+                      alt={user.name}
                       className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full object-cover"
                     />
                   ) : (
@@ -134,22 +130,34 @@ function UserList({ selectedUser, onSelectUser }) {
                       <User className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 txt-dim" />
                     </div>
                   )}
+                  {/* Online Status Indicator - Responsive */}
+                  {user.isOnline != undefined && (
+                    <div
+                      className={`absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 lg:w-4 lg:h-4 rounded-full border-2 border-sec ${user.isOnline ? "bg-green-500" : "bg-gray-400"
+                        }`}
+                    />
+                  )}
                 </div>
+                {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                     <h3 className="font-medium txt truncate text-xs sm:text-sm lg:text-base">
-                      {friend.FirstName
-                        ? `${friend.FirstName} ${friend.LastName || ""}`
-                        : "old-user"}
+                      {user.name}
                     </h3>
                     <span className="text-xs txt-disabled hidden sm:block">
-                      {friend.Timestamp}
+                      {user.timestamp}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-xs sm:text-sm txt-dim truncate flex-1">
-                      {friend.LastMessage}
+                      {user.lastMessage}
                     </p>
+                    {/* Unread Count Badge - Responsive sizing */}
+                    {user.unreadCount > 0 && (
+                      <div className="ml-1 sm:ml-2 bg-[var(--btn)] text-white text-xs rounded-full px-1.5 py-0.5 sm:px-2 sm:py-1 min-w-[16px] sm:min-w-[20px] text-center">
+                        {user.unreadCount > 9 ? "9+" : user.unreadCount}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -167,6 +175,7 @@ function UserList({ selectedUser, onSelectUser }) {
               backgroundColor: "color-mix(in srgb, var(--bg-sec), black 10%)",
             }}
           >
+            {/* Modal Header */}
             <div className="p-2 sm:p-3 lg:p-4 border-b border-gray-200/10 flex justify-between items-center">
               <h3 className="text-lg sm:text-xl font-semibold txt">
                 Start a New Chat
@@ -175,7 +184,7 @@ function UserList({ selectedUser, onSelectUser }) {
                 Cancel
               </Button>
             </div>
-
+             {/* Modal Search Bar */}
             <div className="p-2 sm:p-3 lg:p-4 border-b border-gray-200/10 -mt-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 txt-dim" />
