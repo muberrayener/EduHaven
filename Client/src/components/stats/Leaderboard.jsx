@@ -172,6 +172,7 @@ const Leaderboard = () => {
                   </div>
                   <Link
                     to={isCurrentUser ? "/stats" : `/user/${user.userId}`}
+                    onClick={() => setSelectedUserId(user.userId)}
                     className="text-center font-semibold flex items-center gap-2"
                   >
                     {/* Show user's profile picture before their name. If the image fails, track the userId in imageErrorIds so we don't retry rendering a broken image. */}
