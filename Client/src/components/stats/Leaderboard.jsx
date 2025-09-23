@@ -14,6 +14,7 @@ const Leaderboard = () => {
   const [view, setView] = useState("weekly");
   const [friendsOnly, setFriendsOnly] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [selectedUserId, setSelectedUserId] = useState(null);
   const [imageErrorIds, setImageErrorIds] = useState(new Set());
 
   // Replace direct axios call with TanStack Query hook
