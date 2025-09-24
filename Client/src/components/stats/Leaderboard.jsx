@@ -43,6 +43,9 @@ const Leaderboard = () => {
   const handleFriendsOnlyToggle = () => setFriendsOnly((prev) => !prev);
 
   const currentUser = leaderboard.find((user) => user.userId === currentUserId);
+  const highlightedUser = leaderboard.find(
+    (user) => user.userId === highlightedUserId
+  );
 
   const getBadge = (rank) => {
     const baseBadgeStyle = `inline-flex items-center gap-1 rounded-full text-xs font-medium px-2 py-1 -ml-3`;
@@ -223,8 +226,16 @@ const Leaderboard = () => {
               {formatDuration(currentUser.totalDuration)})
             </>
           ) : (
-            leaderboard.find((user) => user.userId === highlightedUserId)
-              .username
+            <>
+              {
+                leaderboard.find((user) => user.userId === highlightedUserId)
+                  .username
+              }
+              {"'s Position: "}
+              {leaderboard.findIndex((u) => u.userId === highlightedUserId) +
+                1}{" "}
+              ({formatDuration(highlightedUser.totalDuration)})
+            </>
           )}
         </div>
       )}
