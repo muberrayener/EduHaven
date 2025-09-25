@@ -159,7 +159,7 @@ const getUserStats = async (userId) => {
   };
 };
 
-// Helper: Leaderboard data
+// Helper: Leaderboard dataa
 const getLeaderboardData = async (period, friendsOnly, userId) => {
   if (!validPeriods.includes(period)) throw new Error("Invalid period");
 
@@ -176,14 +176,17 @@ const getLeaderboardData = async (period, friendsOnly, userId) => {
     startDate = new Date(now.getFullYear(), now.getMonth(), 1);
   }
 
-  let userIdsToInclude;
+  // 🔑 Fix: Safe handling of friendsOnly
+  let userIdsToInclude = [userId];
   if (friendsOnly) {
     const user = await User.findById(userId).select("friends");
-    userIdsToInclude = [userId, ...(user?.friends || [])];
+    if (user && Array.isArray(user.friends)) {
+      userIdsToInclude = [...userIdsToInclude, ...user.friends];
+    }
   }
 
   const matchStage = { startTime: { $gte: startDate } };
-  if (friendsOnly && userIdsToInclude) {
+  if (friendsOnly && userIdsToInclude.length > 0) {
     matchStage.user = {
       $in: userIdsToInclude.map((id) =>
         typeof id === "string" ? new mongoose.Types.ObjectId(id) : id
@@ -215,6 +218,7 @@ const getLeaderboardData = async (period, friendsOnly, userId) => {
   ]);
 };
 
+
 // Controller: User study stats
 const getUserStudyStats = async (req, res) => {
   try {
@@ -233,7 +237,7 @@ const getLeaderboard = async (req, res) => {
     const leaderboard = await getLeaderboardData(
       period,
       friendsOnly === "true",
-      req.user?._id
+      req.user?.id
     );
     res.json(leaderboard);
   } catch (error) {
