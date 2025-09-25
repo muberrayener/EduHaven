@@ -247,7 +247,7 @@ const giveKudos = async (req, res) => {
   }
 };
 
-const getAllUsers = async (req, res) => {
+const findUserByUsernameOrEmail = async (req, res) => {
   try {
     const search = req.query.search || "";
 
@@ -278,5 +278,5 @@ export {
   giveKudos,
   updateProfile,
   uploadProfilePicture,
-  getAllUsers,
+  findUserByUsernameOrEmail,
 };
