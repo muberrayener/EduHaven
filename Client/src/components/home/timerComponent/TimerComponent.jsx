@@ -30,8 +30,7 @@ function TimerComponent() {
           <div className="relative">
             <Button
               onClick={() => setIsBreakMode(false)}
-              variant="link"
-              size="default"
+              variant="transparent"
               className={`text-xl transition-colors duration-300 pb-1 ${!isBreakMode ? "font-semibold text-white" : "text-gray-300"}`}
             >
               Focus
@@ -44,12 +43,13 @@ function TimerComponent() {
             )}
           </div>
           <div className="relative">
-            <button
+            <Button
               onClick={() => setIsBreakMode(true)}
+              variant="transparent"
               className={`text-xl transition-colors duration-300 pb-1 ${isBreakMode ? "font-semibold text-white" : "text-gray-300"}`}
             >
               Take a Break
-            </button>
+            </Button>
 
             {isBreakMode && (
               <motion.div

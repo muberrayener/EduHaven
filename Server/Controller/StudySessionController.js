@@ -212,6 +212,7 @@ const getLeaderboardData = async (period, friendsOnly, userId) => {
       $project: {
         userId: "$user._id",
         username: "$user.FirstName",
+        profilePicture: "$user.ProfilePicture",
         totalDuration: 1,
       },
     },

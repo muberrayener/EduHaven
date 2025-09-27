@@ -6,6 +6,7 @@ import { getAllBadges } from "@/utils/badgeSystem";
 import { useUserProfile } from "@/contexts/UserProfileContext";
 import BadgeModal from "./BadgeModal";
 import BadgeTooltip from "./BadgeTooltip";
+import { Button } from "@/components/ui/button";
 
 const Badges = () => {
   const [earnedBadges, setEarnedBadges] = useState([]);
@@ -81,13 +82,15 @@ const Badges = () => {
               </p>
             )}
           </div>
-          <button
+          <Button
             onClick={() => setIsModalOpen(true)}
-            className="p-2 hover:bg-[var(--bg-ter)] rounded-lg transition-colors group"
+            variant="transparent"
+            size="icon"
+            className="hover:bg-[var(--bg-ter)] rounded-lg group"
             title="View all badges"
           >
             <Info className="w-5 h-5 text-[var(--txt-dim)] group-hover:text-[var(--txt)]" />
-          </button>
+          </Button>
         </div>
 
         <div className="grid grid-cols-5 gap-4">

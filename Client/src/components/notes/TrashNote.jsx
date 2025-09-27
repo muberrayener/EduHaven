@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Trash2, RotateCcw } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const TrashNoteCard = ({ note, onDelete, onRestore, getPlainTextPreview }) => {
   const [hovered, setHovered] = useState(false);
@@ -52,22 +53,24 @@ const TrashNoteCard = ({ note, onDelete, onRestore, getPlainTextPreview }) => {
           animate={{ scale: 1 }}
         >
           {/* Restore button */}
-          <button
+          <Button
             onClick={() => onRestore(note?._id)}
+            variant="default"
             className="p-2 rounded bg-green-500 hover:bg-green-600 text-white flex items-center gap-1"
           >
             <RotateCcw size={16} />
             Restore
-          </button>
+          </Button>
 
           {/* Delete permanently button */}
-          <button
+          <Button
             onClick={() => onDelete(note?._id)}
+            variant="default"
             className="p-2 rounded bg-red-500 hover:bg-red-600 text-white flex items-center gap-1"
           >
             <Trash2 size={16} />
             Delete
-          </button>
+          </Button>
         </motion.div>
       )}
     </div>

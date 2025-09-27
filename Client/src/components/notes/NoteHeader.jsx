@@ -1,6 +1,7 @@
 import { Archive, FileText, Plus, Search, Trash2 } from "lucide-react";
-import { Button } from "../ui/button";
+// import { Button } from "../ui/button";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 const NoteHeader = ({
   createNewNote,
@@ -9,6 +10,7 @@ const NoteHeader = ({
   selectedNote,
   setStatus,
   setSelectedNote,
+  status,
 }) => {
   return (
     <header
@@ -22,7 +24,12 @@ const NoteHeader = ({
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
-          className="flex items-center gap-2 font-medium text-[var(--txt)] hover:bg-[var(--bg-ter)] px-3 py-2 rounded-lg"
+          className={`flex items-center gap-2 font-medium px-3 py-2 rounded-lg relative
+            ${
+              status === "active"
+                ? "text-[var(--btn)] font-bold"
+                : "text-[var(--txt)] hover:bg-[var(--bg-ter)]"
+            }`}
           onClick={() => {
             setStatus("active");
             setSelectedNote(null);
@@ -30,10 +37,22 @@ const NoteHeader = ({
         >
           <FileText size={18} />
           Notes
+          {status === "active" && (
+            <motion.div
+              layoutId="activeTab"
+              className="absolute bottom-0 left-0 w-full h-[2px] bg-[var(--btn)] rounded"
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+          )}
         </Button>
         <Button
           variant="ghost"
-          className="flex items-center gap-2 font-medium text-[var(--txt)] hover:bg-[var(--bg-ter)] px-3 py-2 rounded-lg"
+          className={`flex items-center gap-2 font-medium px-3 py-2 rounded-lg relative
+            ${
+              status === "archive"
+                ? "text-[var(--btn)] font-bold"
+                : "text-[var(--txt)] hover:bg-[var(--bg-ter)]"
+            }`}
           onClick={() => {
             setStatus("archive");
             setSelectedNote(null);
@@ -41,10 +60,22 @@ const NoteHeader = ({
         >
           <Archive size={18} />
           Archived
+          {status === "archive" && (
+            <motion.div
+              layoutId="activeTab"
+              className="absolute bottom-0 left-0 w-full h-[2px] bg-[var(--btn)] rounded"
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+          )}
         </Button>
         <Button
           variant="ghost"
-          className="flex items-center gap-2 font-medium text-[var(--txt)] hover:bg-[var(--bg-ter)] px-3 py-2 rounded-lg"
+          className={`flex items-center gap-2 font-medium px-3 py-2 rounded-lg relative
+            ${
+              status === "trash"
+                ? "text-[var(--btn)] font-bold"
+                : "text-[var(--txt)] hover:bg-[var(--bg-ter)]"
+            }`}
           onClick={() => {
             setStatus("trash");
             setSelectedNote(null);
@@ -52,6 +83,13 @@ const NoteHeader = ({
         >
           <Trash2 size={18} />
           Trash
+          {status === "trash" && (
+            <motion.div
+              layoutId="activeTab"
+              className="absolute bottom-0 left-0 w-full h-[2px] bg-[var(--btn)] rounded"
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            />
+          )}
         </Button>
       </div>
 

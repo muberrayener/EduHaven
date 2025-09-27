@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import {
   Trash,
   Palette,
@@ -9,7 +10,24 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+const exportNote = (note) => {
+  console.log("clicked download")
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = note.content;
+  const textContent = tempDiv.textContent || tempDiv.innerText || "";
+  const content = `# ${note.title}\n\n${textContent}`;
+
+  const blob = new Blob([content], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${note.title || "note"}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 function BottomControls({ isSynced, rotate, notes, currentPage, onDelete }) {
+  const navigate = useNavigate();
   return (
     <div className="flex justify-between items-center w-full px-3 p-2 absolute bottom-0 left-0 group-hover:bg-gradient-to-t from-[var(--bg-sec)] via-[var(--bg-sec)] to-transparent">
       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -24,7 +42,7 @@ function BottomControls({ isSynced, rotate, notes, currentPage, onDelete }) {
         </Button>
         <Button
           title="Download note"
-          onClick={() => console.log("clicked download")}
+          onClick={() => exportNote(notes[currentPage])}
           variant="transparent"
           size="icon"
           className=" hover:bg-[var(--bg-ter)] rounded-full"
@@ -42,7 +60,7 @@ function BottomControls({ isSynced, rotate, notes, currentPage, onDelete }) {
         </Button>
         <Button
           title="Open in full screen"
-          onClick={() => console.log("clicked maximize")}
+          onClick={() => navigate(`/notes/${notes[currentPage]?._id || "new"}`)}
           variant="transparent"
           size="icon"
           className=" hover:bg-[var(--bg-ter)] rounded-full"
@@ -86,11 +104,11 @@ function BottomControls({ isSynced, rotate, notes, currentPage, onDelete }) {
       <div className="bg-[var(--bg-sec)] txt-disabled p-1 px-2 rounded-full">
         {notes[currentPage]?.createdAt
           ? new Date(notes[currentPage].createdAt).toLocaleDateString() +
-            "\u00A0\u00A0\u00A0" +
-            new Date(notes[currentPage].createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+          "\u00A0\u00A0\u00A0" +
+          new Date(notes[currentPage].createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
           : "No date available"}
       </div>
     </div>

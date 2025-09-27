@@ -1,5 +1,6 @@
 import Note from "../Model/NoteModel.js";
 import { v2 as cloudinary } from "cloudinary";
+import { removefromCloudinary } from "../utils/Cloudnary.js";
 
 // Configure Cloudinary
 cloudinary.config({
@@ -291,3 +292,25 @@ export const restoreNote = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+export const deleteNoteImage = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Please log in" });
+    }
+    const { publicId } = req.body;
+    if (!publicId) {
+      return res.status(400).json({ error: "No image specified" });
+    }
+    await removefromCloudinary(publicId, "image");
+    return res
+      .status(200)
+      .json({ message: "Note image deleted successfully" });
+  } catch (error) {
+    console.error("Note image deletion error:", error);
+    return res.status(500).json({
+      error: "Failed to delete note image",
+      details: error.message,
+    });
+  }
+};
+
