@@ -314,3 +314,51 @@ export const deleteNoteImage = async (req, res) => {
   }
 };
 
+export const addCollaborator = async (req, res) => {
+  try {
+    const { noteId } = req.params;
+    const { userId, access } = req.body;
+    const currentUser = req.user;
+
+    const note = await Note.findById(noteId);
+    if (!note) {
+      return res.status(404).json({ error: "Note not found" });
+    }
+
+    // Check if current user is the owner
+    if (note.owner.toString() !== currentUser._id.toString()) {
+      return res.status(403).json({ error: "Only the note owner can add collaborators" });
+    }
+
+    // Check if user is trying to add themselves
+    if (userId === currentUser._id.toString()) {
+      return res.status(400).json({ error: "Cannot add yourself as collaborator" });
+    }
+
+    // Check if collaborator already exists
+    const existingCollaborator = note.collaborators.find(
+      collab => collab.user.toString() === userId
+    );
+
+    if (existingCollaborator) {
+      return res.status(400).json({ error: "User is already a collaborator" });
+    }
+
+    note.collaborators.push({
+      user: userId,
+      access: access || "view"
+    });
+
+    await note.save();
+
+    await note.populate("collaborators.user", "Username Email");
+
+    res.status(200).json({ 
+      message: "Collaborator added successfully",
+      note 
+    });
+  } catch (error) {
+    console.error("Error adding collaborator:", error);
+    res.status(500).json({ error: "Failed to add collaborator", details: error.message });
+  }
+};

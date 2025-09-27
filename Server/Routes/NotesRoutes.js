@@ -15,6 +15,7 @@ import {
   restoreNote,
   updateNote,
   uploadNoteImage,
+  addCollaborator,
 } from "../Controller/NotesController.js";
 
 import authMiddleware from "../Middlewares/authMiddleware.js";
@@ -109,5 +110,7 @@ router.put(
 
 router.delete("/:id", authMiddleware, deleteNote);
 router.post("/deleteimage", authMiddleware, deleteNoteImage);
+
+router.post('/:noteId/collaborators', authMiddleware, addCollaborator);
 
 export default router;
