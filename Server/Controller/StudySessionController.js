@@ -58,6 +58,7 @@ const createStudySession = async (req, res) => {
     });
 
     await session.save();
+    await updateStreaks(req.user.id);
     res.status(201).json(session);
   } catch (error) {
     console.error("Study session save error:", error);
