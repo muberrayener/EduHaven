@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "@/utils/axios";
-import { toast } from "react-toastify";
+import { useToast } from '@/contexts/ToastContext';
 import { Button } from "@/components/ui/button";
 import PopupContainer from "@/components/ui/Popup";
 
@@ -9,6 +9,7 @@ const EventPopup = ({ date, onClose, refreshEvents }) => {
   const [title, setTitle] = useState("");
   const [time, setTime] = useState("08:00");
   const [id, setId] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchEvent = async () => {
