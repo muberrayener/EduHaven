@@ -1,9 +1,8 @@
-// BasicInfo.jsx (Clean version with Context)
 import { useEffect, useRef, useState } from "react";
 import axiosInstance from "@/utils/axios";
 import { jwtDecode } from "jwt-decode";
 import { useUserProfile } from "../../contexts/UserProfileContext";
-import { useToast } from "../../contexts/ToastContext"; // Import toast hook
+import { useToast } from "../../contexts/ToastContext";
 import { Camera, User, Trash2 } from "lucide-react";
 import UpdateButton from "./UpdateButton";
 import { CropModal } from "../CropModal";
@@ -31,7 +30,7 @@ export default function BasicInfo() {
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   
-  // Use toast from context
+  
   const { toast } = useToast();
 
   useEffect(() => {

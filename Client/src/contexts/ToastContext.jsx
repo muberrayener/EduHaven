@@ -1,4 +1,3 @@
-// contexts/ToastContext.js
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { CheckCircle, AlertCircle, XCircle, Info, X } from 'lucide-react';
 
@@ -23,7 +22,6 @@ const TOAST_TYPES = {
   }
 };
 
-// Individual Toast Component
 const Toast = ({ toast, onRemove }) => {
   const [isVisible, setIsVisible] = React.useState(false);
   const [isExiting, setIsExiting] = React.useState(false);
@@ -88,7 +86,6 @@ const Toast = ({ toast, onRemove }) => {
   );
 };
 
-// Toast Container Component
 const ToastContainer = ({ toasts, onRemove, position = 'top-right' }) => {
   const getPositionClasses = () => {
     switch (position) {
@@ -127,7 +124,6 @@ const ToastContainer = ({ toasts, onRemove, position = 'top-right' }) => {
   );
 };
 
-// Toast Provider Component
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
@@ -167,7 +163,6 @@ export const ToastProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use toast
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
