@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { User, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const FriendsPopup = ({
   showPopup,
@@ -84,32 +85,41 @@ const FriendsPopup = ({
                   <p className="txt-dim text-center mt-10">No friends yet</p>
                 ) : (
                   friendsList.map((friend) => (
-                    <div
+                    <Link 
                       key={friend._id}
-                      className="flex items-center gap-3 p-4 cursor-pointer hover:bg-sec/70 transition rounded-lg mx-2"
+                      to={`/user/${friend._id}`} 
                     >
-                      <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
-                        {friend.ProfilePicture ? (
-                          <img
-                            src={friend.ProfilePicture}
-                            className="w-full h-full object-cover"
-                            alt={`${friend.FirstName}'s profile`}
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-sec flex items-center justify-center">
-                            <User className="w-5 h-5 txt-dim" />
-                          </div>
-                        )}
-                      </div>
 
-                      <div className="flex-1 min-w-0">
-                        <p className="txt font-medium text-lg truncate">
-                          {friend.FirstName
-                            ? `${friend.FirstName} ${friend.LastName || ""}`
-                            : "old-user"}
-                        </p>
+                      <div
+                        className="flex items-center gap-3 p-4 cursor-pointer hover:bg-sec/70 transition rounded-lg mx-2"
+                      >
+                        <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
+                          {friend.ProfilePicture ? (
+                            <img
+                              src={friend.ProfilePicture}
+                              className="w-full h-full object-cover"
+                              alt={`${friend.FirstName}'s profile`}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-sec flex items-center justify-center">
+                              <User className="w-5 h-5 txt-dim" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="txt font-medium leading-tight text-lg truncate">
+                            {friend.FirstName
+                              ? `${friend.FirstName} ${friend.LastName || ""}`
+                              : "old-user"}
+                          </p>
+                          {
+                            friend.Username && 
+                            <span className="text-sm txt-dim">@{friend.Username}</span>
+                          }
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                   ))
                 )}
               </div>
