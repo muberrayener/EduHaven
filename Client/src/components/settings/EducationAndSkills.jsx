@@ -39,7 +39,7 @@ function EducationAndSkills() {
 
         if (!user) {
           fetchUserDetails(decoded.id);
-        } else {
+        } else if (!initialData) { 
           const initial = {
             University: user.University || "",
             FieldOfStudy: user.FieldOfStudy || "",
