@@ -77,11 +77,9 @@ function NotesComponent() {
   // Handled adding new page at the start 
   const addNewPage = () => {
     const newNote = { title: "", content: "", date: new Date() };
-    // ✨ FIX: Add the new note to the beginning of the array
+    // Add the new note to the beginning of the array
     setNotes((prevNotes) => [newNote, ...prevNotes]);
-    // ✨ FIX: Go to the first page (index 0) to show the new note
     setCurrentPage(0);
-    // Optional: Set direction if you want the animation to work when adding a new note
     setDirection(-1);
   };
 
@@ -132,7 +130,7 @@ function NotesComponent() {
     try {
       const response = await axiosInstance.delete(`/note/${id}`);
       if (response.data.success) {
-        // ✨ FIX: Adjust the current page before fetching new notes
+        //Adjusting the current page before fetching new notes
         if (currentPage >= notes.length - 1 && currentPage > 0) {
           setCurrentPage((prev) => prev - 1);
         }
