@@ -27,6 +27,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AuthLayout from "./components/AuthLayout";
 import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
+import SharedNotePage from "./pages/SharedNotePage";
 
 function App() {
   const queryClient = new QueryClient();
@@ -73,6 +74,7 @@ function App() {
               <Route path="/signout" element={<Signout />} />
               <Route path="session/:id" element={<StudyRoom />} />
               <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/note/shared/:shareToken" element={<SharedNotePage />} />
               <Route path="*" element={<PageNotFound />} />
             </Routes>
           </RouterSelector>
