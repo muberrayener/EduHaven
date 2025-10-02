@@ -50,7 +50,7 @@ export default function SuggestedFriends() {
 
       <div className="flex flex-wrap justify-center gap-3 2xl:gap-4 mt-4">
         {filteredUsers.map((user) => (
-          <UserCard key={user._id} user={user} selectedTab="suggested" />
+          <UserCard key={user._id} user={user} selectedTab="findFriends" />
         ))}
       </div>
 

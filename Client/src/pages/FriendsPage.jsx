@@ -8,14 +8,14 @@ import { useSearchParams } from "react-router-dom";
 function FriendsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const tabs = ["suggested", "friendRequests", "sentRequests", "allFriends"];
+  const tabs = ["findFriends", "friendRequests", "sentRequests", "allFriends"];
   const activeTab = tabs.includes(searchParams.get("tab"))
     ? searchParams.get("tab")
-    : "suggested";
+    : "findFriends";
 
   useEffect(() => {
     if (!searchParams.get("tab")) {
-      setSearchParams({ tab: "suggested" }, { replace: true });
+      setSearchParams({ tab: "findFriends" }, { replace: true });
     }
   }, [searchParams, setSearchParams]);
 

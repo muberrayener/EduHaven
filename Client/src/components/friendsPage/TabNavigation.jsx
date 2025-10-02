@@ -3,7 +3,7 @@ import NotificationIndicator from "../NotificationIndicator";
 import { Users, UserPlus, UserCheck, User } from "lucide-react";
 
 const tabIcons = {
-  suggested: <UserPlus size={24} />,
+  findFriends: <UserPlus size={24} />,
   friendRequests: <Users size={24} />,
   sentRequests: <UserCheck size={24} />,
   allFriends: <User size={24} />,
@@ -11,7 +11,7 @@ const tabIcons = {
 
 function TabNavigation({ activeTab, onTabChange }) {
   const tabs = [
-    { id: "suggested", label: "Suggested" },
+    { id: "findFriends", label: "Find Friends" },
     { id: "friendRequests", label: "Friend Requests" },
     { id: "sentRequests", label: "Sent Requests" },
     { id: "allFriends", label: "All Friends" },
