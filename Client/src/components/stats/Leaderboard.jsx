@@ -10,6 +10,24 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
+const LeaderboardItemSkeleton = () => {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 transition-all">
+      <div className="flex gap-4 items-center justify-between w-full">
+
+        <div className="w-8 h-6 rounded-full bg-ter animate-pulse" />
+
+        <div className="flex  items-center flex-1 gap-2">
+          <div className="w-8 h-8 rounded-full bg-ter animate-pulse" />
+          <div className="w-1/2 h-4 rounded-xl bg-ter animate-pulse" />
+        </div>
+
+        <div className="w-8 h-4 rounded-xl bg-ter animate-pulse" />
+      </div>
+    </div>
+  );
+};
+
 const Leaderboard = () => {
   const { userId } = useParams();
   const location = useLocation();
@@ -152,69 +170,72 @@ const Leaderboard = () => {
       </div>
 
       {/* Leaderboard Content */}
-      <div
-        className={`space-y-2 transition-all duration-500 ${
-          isLoading ? "opacity-0 -translate-y-2" : "opacity-100 translate-y-0"
-        } min-h-[450px]`}
-      >
-        {!isLoading && leaderboard.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-[var(--txt-dim)] text-sm font-medium">
-            No records found for this timeframe.
-          </div>
-        ) : (
-          leaderboard.slice(0, 10).map((user, index) => {
-            const isCurrentUser = user.userId === currentUserId;
-            return (
-              <div
-                key={user.userId}
-                className={`flex items-center justify-between px-5 py-3 rounded-xl transition-all text-sm ${
-                  user.userId === highlightedUserId
-                    ? "bg-[var(--btn)] text-white"
-                    : "hover:bg-[var(--bg-ter)] text-[var(--txt)]"
-                }`}
-              >
-                <div className="flex gap-2">
-                  <div className="flex justify-start min-w-9">
-                    {getBadge(index)}
-                  </div>
-                  <Link
-                    to={isCurrentUser ? "/stats" : `/user/${user.userId}`}
-                    className="text-center font-semibold flex items-center gap-2"
-                  >
-                    {/* Show user's profile picture before their name. If the image fails, track the userId in imageErrorIds so we don't retry rendering a broken image. */}
-                    {user.profilePicture && !imageErrorIds.has(user.userId) ? (
-                      <img
-                        src={user.profilePicture}
-                        alt={`${user.username}'s avatar`}
-                        className="w-7 h-7 rounded-full object-cover flex-shrink-0"
-                        referrerPolicy="no-referrer"
-                        onError={() => {
-                          setImageErrorIds((prev) => {
-                            const next = new Set(prev);
-                            next.add(user.userId);
-                            return next;
-                          });
-                        }}
-                      />
-                    ) : null}
-                    <span className="truncate max-w-[12rem] 2xl:max-w-[9.5rem] inline-block align-middle">
-                      {user.username}
-                    </span>
-                  </Link>
-                </div>
-
+      {isLoading ? (
+        <div className="space-y-2 min-h-[450px]">
+          <LeaderboardItemSkeleton />
+          <LeaderboardItemSkeleton />
+          <LeaderboardItemSkeleton />
+        </div>
+      ) : (
+        <div className="space-y-2 transition-all duration-500 opacity-100 translate-y-0 min-h-[450px]">
+          {leaderboard.length === 0 ? (
+            <div className="flex items-center justify-center h-full text-[var(--txt-dim)] text-sm font-medium">
+              No records found for this timeframe.
+            </div>
+          ) : (
+            leaderboard.slice(0, 10).map((user, index) => {
+              const isCurrentUser = user.userId === currentUserId;
+              return (
                 <div
-                  className={`text-right font-medium ${
-                    isCurrentUser ? "text-white" : "text-[var(--txt-dim)]"
+                  key={user.userId}
+                  className={`flex items-center justify-between px-5 py-3 rounded-xl transition-all text-sm ${
+                    user.userId === highlightedUserId
+                      ? "bg-[var(--btn)] text-white"
+                      : "hover:bg-[var(--bg-ter)] text-[var(--txt)]"
                   }`}
                 >
-                  {formatDuration(user.totalDuration)}
+                  <div className="flex gap-2">
+                    <div className="flex justify-start min-w-9">
+                      {getBadge(index)}
+                    </div>
+                    <Link
+                      to={isCurrentUser ? "/stats" : `/user/${user.userId}`}
+                      className="text-center font-semibold flex items-center gap-2"
+                    >
+                      {user.profilePicture && !imageErrorIds.has(user.userId) ? (
+                        <img
+                          src={user.profilePicture}
+                          alt={`${user.username}'s avatar`}
+                          className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                          referrerPolicy="no-referrer"
+                          onError={() => {
+                            setImageErrorIds((prev) => {
+                              const next = new Set(prev);
+                              next.add(user.userId);
+                              return next;
+                            });
+                          }}
+                        />
+                      ) : null}
+                      <span className="truncate max-w-[12rem] 2xl:max-w-[9.5rem] inline-block align-middle">
+                        {user.username}
+                      </span>
+                    </Link>
+                  </div>
+
+                  <div
+                    className={`text-right font-medium ${
+                      isCurrentUser ? "text-white" : "text-[var(--txt-dim)]"
+                    }`}
+                  >
+                    {formatDuration(user.totalDuration)}
+                  </div>
                 </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
+      )}
 
       {/* Footer */}
       {currentUser && leaderboard.length > 0 && (
