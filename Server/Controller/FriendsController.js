@@ -31,6 +31,7 @@ export const userList = async (req, res) => {
         $or: [
           { FirstName: { $regex: search, $options: "i" } },
           { LastName: { $regex: search, $options: "i" } },
+          { Username: { $regex: search, $options: "i" } },
           { Email: { $regex: search, $options: "i" } },
           { "OtherDetails.skills": { $regex: search, $options: "i" } },
           { "OtherDetails.interests": { $regex: search, $options: "i" } },
