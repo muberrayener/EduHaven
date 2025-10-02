@@ -6,6 +6,7 @@ import {
   checkAllBadges,
   checkAndAwardRookieBadge,
 } from "../utils/badgeSystem.js";
+import { updateStreaks } from "../utils/streakUpdater.js";
 
 // =====================
 // Utility Functions
@@ -107,7 +108,12 @@ const getUserDetails = async (req, res) => {
     if (!userId || userId === "undefined") {
       return sendError(res, 400, "User ID is required and cannot be undefined");
     }
-
+    try {
+        await updateStreaks(userId);
+     } catch (err) {
+      console.error("Failed to update streaks:", err.message);
+      // don't throw, let user data still load
+     }
     const user = await User.findById(userId).select("-Password").lean();
     if (!user) return sendError(res, 404, "User not found");
 
@@ -269,6 +275,7 @@ const findUserByUsernameOrEmail = async (req, res) => {
   } catch (error) {
     console.error("Error fetching all users:", error);
     return sendError(res, 500, "Failed to fetch users", error.message);
+
   }
 };
 
