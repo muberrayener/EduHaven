@@ -155,6 +155,134 @@
    npm run dev
    ```
 
+## Troubleshooting
+
+### Port 5000 Busy
+**Symptom:** `EADDRINUSE` when starting the dev server.  
+**Fix:** Run on another port.
+
+```bash
+# macOS / Linux
+PORT=5001 npm run dev
+
+# PowerShell
+$Env:PORT=5001; npm run dev
+
+# cmd (Windows)
+set PORT=5001&& npm run dev
+```
+
+---
+
+### MongoDB Not Connecting
+**Symptom:** `MongoNetworkError` or connection failures.  
+**Checks & Fixes:**
+- Ensure MongoDB service is running locally or that `MONGO_URI` points to a valid Atlas URI.
+- Default fallback URI used by the project: `mongodb://localhost:27017/eduhaven`.
+- Confirm network/whitelist settings (for Atlas) and that credentials are correct.
+
+```js
+// Server/Database/Db.js (DB connect block)
+const mongoose = require('mongoose');
+
+const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/eduhaven';
+
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => {
+    console.error('MongoDB connection error:', err.message);
+    process.exit(1);
+  });
+```
+
+---
+
+### CORS Blocking Requests
+**Symptom:** Browser console shows "blocked by CORS policy" when frontend calls backend.  
+**Fix:** Ensure backend enables CORS and `CLIENT_URL` matches frontend origin. Allow credentials if you use cookies/sessions.
+
+```bash
+# Install CORS in Server
+cd Server
+npm install cors
+cd ..
+```
+
+```js
+// Server/index.js (insert before routes / replace listen block)
+const express = require('express');
+const cors = require('cors');
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors({
+  origin: process.env.CLIENT_URL || '*',
+  credentials: true
+}));
+
+// ... your routes and middleware here ...
+
+app.listen(PORT, () => {
+  console.log(`Server listening on ${PORT}`);
+});
+```
+
+**Notes:**
+- For production, avoid `origin: '*'` when `credentials: true` — set `CLIENT_URL` to the exact frontend origin.
+- If using cookies, ensure `fetch`/`axios` requests include credentials (`credentials: 'include'` / `withCredentials: true`) and set proper cookie options (`sameSite`, `secure`) depending on environment.
+
+---
+
+### OAuth / Infinite Buffering (Google / OAuth)
+**Symptom:** Auth spinner never returns, sign-in never completes.  
+**Fixes & Checks:**
+- Clear browser cookies/localStorage for `localhost` (DevTools → Application → Clear Storage).
+- Confirm `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and redirect URIs are set correctly in both `.env` and the Google (or OAuth provider) console.
+- Verify the redirect URI registered in the provider exactly matches the one used by your app (including protocol and port, e.g. `http://localhost:3000/auth/google/callback`).
+
+---
+
+### Server `.env` Example
+Add or update `.env.example` in `Server/` to help contributors set required env vars:
+
+```env
+# Server/.env.example
+PORT=5000
+CLIENT_URL=http://localhost:3000
+MONGO_URI=mongodb://localhost:27017/eduhaven
+
+# OAuth (uncomment and fill in for production/dev)
+# GOOGLE_CLIENT_ID=your-google-client-id
+# GOOGLE_CLIENT_SECRET=your-google-client-secret
+# SESSION_SECRET=your-session-secret
+```
+
+---
+
+### Quick Manual Tests (run locally)
+```bash
+# 1) Port test: occupy 5000 in another terminal then run server
+python3 -m http.server 5000 &    # macOS/Linux to occupy port 5000
+cd Server
+npm run dev
+# if EADDRINUSE, run:
+PORT=5001 npm run dev
+
+# 2) MongoDB test:
+# Stop DB service (OS-specific), run server (should error), start DB, then server should log "MongoDB connected"
+
+# 3) CORS test:
+# Run frontend + backend, trigger API call; if blocked, set CLIENT_URL to frontend origin and confirm cors enabled
+
+# 4) OAuth test:
+# Clear browser storage for localhost (DevTools → Application → Clear Storage) and retry sign-in
+```
+
+---
+
+
+
 ## Contribution Guidelines
 
 1. You must get assigned to the issue before you start working on it. leave comment to get issue assigned.
