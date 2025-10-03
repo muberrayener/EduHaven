@@ -9,49 +9,68 @@ import { Button } from "@/components/ui/button";
 
 const backendUrl = import.meta.env.VITE_API_URL;
 
-// --- Validation Functions ---
-const validateEmail = (value) => {
-  if (!value) return "Email is required";
-  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return pattern.test(value) ? true : "Enter a valid email address";
-};
-
-const validateName = (value, fieldName) => {
-  if (!value) return `${fieldName} is required`;
-  if (!/^[A-Za-z]*$/.test(value)) return "Please input only letters";
-  if (value.length < 2) return "Please enter at least 2 letters";
-  if (value.length > 12) return "Character limit exceeds";
-};
-
-const validateUsername = (value) => {
-  if (!value) return "Username is required";
-  if (!/^[A-Za-z0-9_]*$/.test(value))
-    return "Username can only contain letters, numbers, and underscores";
-  if (value.length < 3) return "Username must be at least 3 characters long";
-  return true;
-};
-
-const validatePassword = (value) => {
-  if (!value) return "Password is required";
-  if (value.length < 6) return "Password must be at least 6 characters";
-  return true;
-};
-
-// --- Password Strength Function ---
-const passwordEdgeCases = (pwd) => {
-  let score = 0;
-  if (pwd.trim().length >= 6) score++;
-  if (/\d/.test(pwd)) score++;
-  if (/[A-Z]/.test(pwd)) score++;
-  if (/[a-z]/.test(pwd)) score++;
-  if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) score++;
-  return score;
-};
-
 function SignUp() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [strength, setStrength] = useState(0);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState(null);
+
+  // --- Validation Functions ---
+  const validateEmail = (value) => {
+    if (!value) return "Email is required";
+    const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return pattern.test(value) ? true : "Enter a valid email address";
+  };
+
+  const validateName = (value, fieldName) => {
+    if (!value) return `${fieldName} is required`;
+    if (!/^[A-Za-z]*$/.test(value)) return "Please input only letters";
+    if (value.length < 2) return "Please enter at least 2 letters";
+    if (value.length > 12) return "Character limit exceeds";
+  };
+
+  const validateUsername = async (value) => {
+    if (!value) return "Username is required";
+    if (!/^[A-Za-z0-9_]*$/.test(value))
+      return "Username can only contain letters, numbers, and underscores";
+    if (value.length < 3) return "Username must be at least 3 characters long";
+
+    // Check for Username Exist or not?
+    try {
+      setIsCheckingUsername(true);
+      const response = await axiosInstance.get(
+        `/user/check-username?username=${value}`
+      );
+      if (response.data.exists) {
+        return "This username is already taken";
+      }
+    } catch (error) {
+      console.error("Error validating username:", error);
+      return "Could not validate username, try again";
+    } finally {
+      setIsCheckingUsername(false); // stop loader
+    }
+
+    return true;
+  };
+
+  const validatePassword = (value) => {
+    if (!value) return "Password is required";
+    if (value.length < 6) return "Password must be at least 6 characters";
+    return true;
+  };
+
+  // --- Password Strength Function ---
+  const passwordEdgeCases = (pwd) => {
+    let score = 0;
+    if (pwd.trim().length >= 6) score++;
+    if (/\d/.test(pwd)) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[a-z]/.test(pwd)) score++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) score++;
+    return score;
+  };
 
   // --- Password Strength Logic ---
   const strengthLevels = [
@@ -78,6 +97,26 @@ function SignUp() {
   });
 
   const password = watch("Password", "");
+  const username = watch("Username", "");
+
+  useEffect(() => {
+    if (username) {
+      // User is typing
+      setIsCheckingUsername(true);
+
+      if (typingTimeout) clearTimeout(typingTimeout);
+
+      const timeout = setTimeout(() => {
+        setIsCheckingUsername(false); // stop loader after 500ms of inactivity
+      }, 500);
+
+      setTypingTimeout(timeout);
+    } else {
+      setIsCheckingUsername(false);
+    }
+
+    return () => typingTimeout && clearTimeout(typingTimeout);
+  }, [username]);
 
   useEffect(() => {
     setStrength(passwordEdgeCases(password));
@@ -300,8 +339,34 @@ function SignUp() {
                       placeholder="knight_owl"
                       maxLength={20}
                       {...field}
-                      className="block w-full rounded-xl border bg-transparent border-gray-400 px-3 py-2 text-gray-900 dark:text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 sm:text-sm"
+                      className="block w-full rounded-xl border bg-transparent border-gray-400 pl-3 pr-12 py-2 text-gray-900 dark:text-gray-300 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 sm:text-sm"
                     />
+
+                    {/* Loader on right */}
+                    {isCheckingUsername && (
+                      <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                        <svg
+                          className="animate-spin h-5 w-5 text-gray-500"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                          />
+                        </svg>
+                      </div>
+                    )}
 
                     {/*Show Character Remaining */}
                     <span
