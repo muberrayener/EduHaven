@@ -14,23 +14,8 @@ export const friendList = async (req, res) => {
 
 export const userList = async (req, res) => {
   try {
-    const { page = 1, limit = 20, all = false } = req.query;
+    const { page = 1, limit = 20, search = "" } = req.query;
     const currentUser = await User.findById(req.user._id);
-
-    if (all) {
-      const users = await User.find({
-        $and: [
-          { _id: { $ne: currentUser._id } },
-          { _id: { $nin: currentUser.friends || [] } },
-          { _id: { $nin: currentUser.sentRequests || [] } },
-          { _id: { $nin: currentUser.friendRequests || [] } },
-        ],
-      })
-        .sort({ createdAt: -1 })
-        .select("FirstName LastName ProfilePicture Bio OtherDetails");
-
-      return res.json(users);
-    }
 
     const query = {
       $and: [
@@ -41,6 +26,19 @@ export const userList = async (req, res) => {
       ],
     };
 
+    if (search.trim()) {
+      query.$and.push({
+        $or: [
+          { FirstName: { $regex: search, $options: "i" } },
+          { LastName: { $regex: search, $options: "i" } },
+          { Username: { $regex: search, $options: "i" } },
+          { Email: { $regex: search, $options: "i" } },
+          { "OtherDetails.skills": { $regex: search, $options: "i" } },
+          { "OtherDetails.interests": { $regex: search, $options: "i" } },
+        ],
+      });
+    }
+
     const totalUsers = await User.countDocuments(query);
 
     const users = await User.find(query)
@@ -49,7 +47,7 @@ export const userList = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(Number(limit));
 
-    const hasMore = page * limit < totalUsers; // true if more users remain
+    const hasMore = page * limit < totalUsers;
 
     res.json({ users, hasMore });
   } catch (err) {
