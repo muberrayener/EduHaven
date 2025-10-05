@@ -42,9 +42,10 @@ export const fetchSuggestedUsers = async ({ page = 1, limit = 20 }) => {
   return data;
 };
 
-export const fetchAllSuggestedUsers = async () => {
+export const fetchAllSuggestedUsers = async ({ pageParam = 1, queryKey }) => {
+  const [_key, searchTerm] = queryKey;
   const { data } = await axiosInstance.get("/friends/friend-suggestions", {
-    params: { all: true },
+    params: { page: pageParam, limit: 20, search: searchTerm },
   });
   return data;
 };
