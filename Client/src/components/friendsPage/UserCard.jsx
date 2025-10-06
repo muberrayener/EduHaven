@@ -55,7 +55,7 @@ function UserCard({ user, selectedTab }) {
       </Link>
 
       <div>
-        {selectedTab === "suggested" && !user.requestSent && (
+        {selectedTab === "findFriends" && !user.requestSent && (
           <Button
             onClick={() => sendRequest(user._id)}
             variant="default"
@@ -67,7 +67,7 @@ function UserCard({ user, selectedTab }) {
           </Button>
         )}
 
-        {selectedTab === "suggested" && user.requestSent && (
+        {selectedTab === "findFriends" && user.requestSent && (
           <Button
             onClick={() => cancelRequest(user._id)}
             variant="secondary"

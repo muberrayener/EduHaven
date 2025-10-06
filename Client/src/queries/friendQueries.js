@@ -111,14 +111,17 @@ export const useUsersInfinite = (limit = 20) => {
   });
 };
 
-export const useAllSuggestedUsers = () => {
-  return useQuery({
-    queryKey: ["friendSuggestions"],
+export const useAllSuggestedUsers = (searchTerm) => {
+  return useInfiniteQuery({
+    queryKey: ["suggestedUsers", searchTerm],
     queryFn: fetchAllSuggestedUsers,
-    staleTime: 1000 * 60,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.hasMore ? allPages.length + 1 : undefined;
+    },
     onError: (err) => handleApiError(err, "Error fetching suggested users"),
   });
 };
+
 
 export const useSendRequest = () => {
   const qc = useQueryClient();

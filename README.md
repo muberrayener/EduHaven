@@ -155,6 +155,28 @@
    npm run dev
    ```
 
+## Troubleshooting
+
+**MongoDB not connecting** — `MongoNetworkError`. Use local service or Atlas; example connect:
+```js
+// Server/Database/Db.js
+const mongoose = require('mongoose');
+const uri = process.env.MONGO_URI || 'mongodb://localhost:27017/eduhaven';
+mongoose.connect(uri, { useNewUrlParser:true, useUnifiedTopology:true })
+  .then(()=>console.log('MongoDB connected'))
+  .catch(err=>{ console.error('MongoDB error:', err.message); process.exit(1); });
+```
+
+**CORS blocked** — "blocked by CORS policy". Enable CORS and set client origin:
+```js
+// Server/index.js (before routes)
+const cors = require('cors');
+app.use(cors({ origin: process.env.CLIENT_URL || '*', credentials: true }));
+```
+
+**OAuth / infinite loading** — spinner never returns. Clear browser storage for localhost and verify `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` and exact redirect URI in .env and provider console.
+
+
 ## Contribution Guidelines
 
 1. You must get assigned to the issue before you start working on it. leave comment to get issue assigned.
