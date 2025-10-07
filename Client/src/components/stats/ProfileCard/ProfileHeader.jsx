@@ -57,7 +57,7 @@ const ProfileHeader = ({
             <DropdownMenuItem onClick={handleCopyLink}>
               Copy Profile Link
             </DropdownMenuItem>
-            <DropdownMenuItem
+            {/* <DropdownMenuItem
               onClick={() => {
                 navigator.share
                   ? navigator.share({
@@ -68,7 +68,7 @@ const ProfileHeader = ({
               }}
             >
               Share via Device
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
