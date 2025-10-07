@@ -30,7 +30,7 @@ export const getAllNotes = async (req, res) => {
         { "collaborators.user": userId },
         { visibility: "public" },
       ],
-    }).populate('collaborators.user', 'FirstName LastName Email Username');
+    }).populate('collaborators.user', 'FirstName LastName Email Username')
       .sort({ pinnedAt: -1, updatedAt: -1 });
 
     res.status(200).json({ success: true, data: notes });
