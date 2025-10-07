@@ -51,7 +51,7 @@ const SharePopup = ({ note, onClose, onShare }) => {
     try {
       const response = await axiosInstance.get(`/user/find-user?search=${encodeURIComponent(query)}`);
       const data = response.data;
-      
+
       if (data.users) {
         setUsers(data.users);
       } else {
@@ -86,7 +86,7 @@ const SharePopup = ({ note, onClose, onShare }) => {
       await axiosInstance.put(`/note/${note._id}`, {
         visibility: newVisibility
       });
-      
+
       if (newVisibility === "public" && !shareLink) {
         await generateShareLink();
       }
@@ -150,12 +150,12 @@ const SharePopup = ({ note, onClose, onShare }) => {
             <h4 className="text-sm font-medium mb-3 text-[var(--txt)]">
               Add people
             </h4>
-            
+
             {/* Search Input */}
             <div className="relative mb-3">
-              <Search 
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--txt-dim)]" 
-                size={16} 
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--txt-dim)]"
+                size={16}
               />
               <input
                 type="text"
@@ -179,8 +179,8 @@ const SharePopup = ({ note, onClose, onShare }) => {
                   <div
                     key={user._id || user.id || index}
                     className={`p-3 cursor-pointer transition-colors ${
-                      selectedUser?._id === user._id 
-                        ? "bg-[var(--btn)]/20" 
+                      selectedUser?._id === user._id
+                        ? "bg-[var(--btn)]/20"
                         : "hover:bg-[var(--bg-ter)]"
                     }`}
                     onClick={() => setSelectedUser(user)}
@@ -247,12 +247,10 @@ const SharePopup = ({ note, onClose, onShare }) => {
                         <User size={16} className="text-[var(--btn-txt)]" />
                       </div>
                       <div>
-                        <div className="text-[var(--txt)] text-sm">
-                          {collaborator.user.FirstName + " " + collaborator.user.LastName}
-                        </div>
-                        <div className="text-xs text-[var(--txt-dim)]">
-                          {collaborator.user.Email} • {collaborator.access}
-                        </div>
+                        {/* Show full collaborator object for debugging */}
+                        <pre className="text-xs text-[var(--txt-dim)] whitespace-pre-wrap max-w-xs">
+                          {JSON.stringify(collaborator, null, 2)}
+                        </pre>
                       </div>
                     </div>
                     <Button
@@ -274,13 +272,13 @@ const SharePopup = ({ note, onClose, onShare }) => {
             <h4 className="text-sm font-medium mb-3 text-[var(--txt)]">
               General access
             </h4>
-            
+
             <div className="space-y-2">
               {/* Private Option */}
-              <div 
+              <div
                 className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                  visibility === "private" 
-                    ? "border-[var(--btn)] bg-[var(--btn)]/10" 
+                  visibility === "private"
+                    ? "border-[var(--btn)] bg-[var(--btn)]/10"
                     : "border-[var(--bg-ter)] hover:border-[var(--btn)]/50"
                 }`}
                 onClick={() => handleVisibilityChange("private")}
@@ -295,12 +293,12 @@ const SharePopup = ({ note, onClose, onShare }) => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Public Option */}
-              <div 
+              <div
                 className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                  visibility === "public" 
-                    ? "border-[var(--btn)] bg-[var(--btn)]/10" 
+                  visibility === "public"
+                    ? "border-[var(--btn)] bg-[var(--btn)]/10"
                     : "border-[var(--bg-ter)] hover:border-[var(--btn)]/50"
                 }`}
                 onClick={() => handleVisibilityChange("public")}
