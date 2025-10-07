@@ -41,14 +41,15 @@ export const getAllNotes = async (req, res) => {
 export const getNoteById = async (req, res) => {
   try {
     const userId = req.user._id;
-    const note = await Note.findById(req.params.id);
+    const note = await Note.findById(req.params.id)
+      .populate('collaborators.user', 'FirstName LastName Email Username');
 
     if (
       !note ||
       (note.visibility !== "public" &&
         note.owner.toString() !== userId.toString() &&
         !note.collaborators.some(
-          (c) => c.user.toString() === userId.toString()
+          (c) => c.user._id.toString() === userId.toString()
         ))
     ) {
       return res.status(403).json({ success: false, error: "Not authorized" });
