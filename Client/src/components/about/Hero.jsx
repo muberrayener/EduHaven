@@ -49,7 +49,7 @@ function Hero({ url, isLoading, stars, forks }) {
 
   return (
     <div className="relative h-[calc(100vh-110px)] flex flex-col items-start justify-center pb-12">
-      <div className="size-28 md:size-32">
+      <div className="hidden md:block md:size-20">
         <img
           src="./Logo.svg"
           alt="Logo"
