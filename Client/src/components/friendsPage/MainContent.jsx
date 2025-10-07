@@ -6,7 +6,7 @@ import AllFriends from "./tabs/AllFriends.jsx";
 function MainContent({ selectedTab }) {
   const getTitle = () => {
     switch (selectedTab) {
-      case "suggested":
+      case "findFriends":
         return "Suggested Friends";
       case "friendRequests":
         return "Friend Requests";
@@ -21,7 +21,7 @@ function MainContent({ selectedTab }) {
 
   const renderTab = () => {
     switch (selectedTab) {
-      case "suggested":
+      case "findFriends":
         return <SuggestedFriends />;
       case "friendRequests":
         return <FriendRequests />;
