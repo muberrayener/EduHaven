@@ -246,12 +246,12 @@ const SharePopup = ({ note, onClose, onShare }) => {
                       <div className="w-8 h-8 rounded-full bg-[var(--btn)] flex items-center justify-center">
                         <User size={16} className="text-[var(--btn-txt)]" />
                       </div>
-                      <div>
-                        {/* Show full collaborator object for debugging */}
-                        <pre className="text-xs text-[var(--txt-dim)] whitespace-pre-wrap max-w-xs">
-                          {JSON.stringify(collaborator, null, 2)}
-                        </pre>
-                      </div>
+                      <div className="text-[var(--txt)] text-sm">
+                          {collaborator.user.FirstName + " " + collaborator.user.LastName}
+                        </div>
+                        <div className="text-xs text-[var(--txt-dim)]">
+                          {collaborator.user.Email} • {collaborator.access}
+                        </div>
                     </div>
                     <Button
                       variant="transparent"
