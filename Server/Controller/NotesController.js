@@ -2,7 +2,9 @@ import Note from "../Model/NoteModel.js";
 import { v2 as cloudinary } from "cloudinary";
 import { removefromCloudinary } from "../utils/Cloudnary.js";
 import crypto from "crypto";
+import dotenv from "dotenv";
 
+dotenv.config()
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "dmehndmws",
@@ -95,7 +97,8 @@ export const updateNote = async (req, res) => {
       req.body;
 
     const userId = req.user._id;
-    const note = await Note.findById(req.params.id);
+    const note = await Note.findById(req.params.id)
+    .populate('collaborators.user', 'FirstName LastName Email Username');
 
     if (!note) {
       return res.status(404).json({ success: false, error: "Note not found" });
@@ -390,7 +393,7 @@ export const generateShareLink = async (req, res) => {
     note.shareTokenExpires = shareTokenExpires; 
     await note.save();
 
-    const shareLink = `http://localhost:5173/note/shared/${shareToken}`;
+    const shareLink = `${process.env.CORS_ORIGIN}/note/shared/${shareToken}`;
     
     res.status(200).json({ 
       success: true,
