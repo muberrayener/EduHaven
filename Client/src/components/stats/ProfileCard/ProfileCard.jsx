@@ -23,7 +23,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
   const [friendsList, setFriendsList] = useState([]);
-  const [showLink, setShowLink] = useState(false);
   const [kudosCount, setKudosCount] = useState(0);
   const [hasGivenKudos, setHasGivenKudos] = useState(false);
   const [friendRequestStatus, setFriendRequestStatus] = useState("Add Friend");
@@ -34,24 +33,11 @@ const ProfileCard = ({ isCurrentUser = false }) => {
   const { mutate: acceptRequest } = useAcceptRequest();
 
   const { userId } = useParams();
-  const shareRef = useRef(null);
   const popupRef = useRef(null);
 
   const profilelink = user?._id
     ? `${window.location.origin}/user/${user._id}`
     : "";
-
-  const toggleLink = () => setShowLink((prev) => !prev);
-  const copyLink = () => {
-    if (!profilelink) return;
-    navigator.clipboard
-      .writeText(profilelink)
-      .then(() => {
-        toast.success("Copied ");
-        setShowLink(false);
-      })
-      .catch(() => toast.error("Not Copied "));
-  };
 
   const handleFriendRequestAction = async () => {
     if (isFriendRequestLoading) return;
@@ -60,16 +46,14 @@ const ProfileCard = ({ isCurrentUser = false }) => {
     if (friendRequestStatus === "Add Friend") {
       sendRequest(userId);
       setFriendRequestStatus("Cancel Request");
-      setIsFriendRequestLoading(false);
     } else if (friendRequestStatus === "Cancel Request") {
       cancelRequest(userId);
       setFriendRequestStatus("Add Friend");
-      setIsFriendRequestLoading(false);
     } else if (friendRequestStatus === "Accept Request") {
       acceptRequest(userId);
       setFriendRequestStatus("Friends");
-      setIsFriendRequestLoading(false);
     }
+    setIsFriendRequestLoading(false);
   };
 
   const handleGiveKudos = async () => {
@@ -96,21 +80,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
       toast.error(error.response?.data?.message || "Failed to give kudos.");
     }
   };
-
-  useEffect(() => {
-    if (showLink) {
-      const handleClickOutside = (event) => {
-        if (shareRef.current && !shareRef.current.contains(event.target)) {
-          setShowLink(false);
-        }
-      };
-
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [showLink]);
 
   useEffect(() => {
     // Fetch friends list + count for either current user or the profile user
@@ -204,14 +173,9 @@ const ProfileCard = ({ isCurrentUser = false }) => {
         isCurrentUser={isCurrentUser}
         user={user}
         profilelink={profilelink}
-        showLink={showLink}
-        toggleLink={toggleLink}
-        copyLink={copyLink}
-        shareRef={shareRef}
         kudosCount={kudosCount}
         friendsCount={friendsList.length}
         setShowPopup={setShowPopup}
-        popupRef={popupRef}
       />
 
       <div className="mx-4">
