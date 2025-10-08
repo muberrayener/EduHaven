@@ -9,6 +9,7 @@ import {
   Archive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 const exportNote = (note) => {
   console.log("clicked download")
@@ -26,14 +27,24 @@ const exportNote = (note) => {
   URL.revokeObjectURL(url);
 };
 
-function BottomControls({ isSynced, rotate, notes, currentPage, onDelete }) {
+function BottomControls({
+  isSynced,
+  rotate,
+  notes,
+  currentPage,
+  onDelete,
+  colors,
+  showColorPicker,
+  setShowColorPicker,
+  changeColor,
+}) {
   const navigate = useNavigate();
   return (
     <div className="flex justify-between items-center w-full px-3 p-2 absolute bottom-0 left-0 group-hover:bg-gradient-to-t from-[var(--bg-sec)] via-[var(--bg-sec)] to-transparent">
       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <Button
           title="Change color"
-          onClick={() => console.log("clicked color")}
+          onClick={() => setShowColorPicker(!showColorPicker)}
           variant="transparent"
           size="icon"
           className=" hover:bg-[var(--bg-ter)] rounded-full"
@@ -101,14 +112,42 @@ function BottomControls({ isSynced, rotate, notes, currentPage, onDelete }) {
         )}
       </div>
 
+      {showColorPicker && (
+        <motion.div
+          className="absolute bottom-16 left-2 border p-2 shadow-lg z-30 flex gap-1 flex-wrap bg-[var(--bg-ter)] rounded-lg"
+          onClick={(e) => e.stopPropagation()}
+          initial={{ scale: 0, y: 10 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0, y: 10 }}
+        >
+          {colors.map((color) => (
+            <button
+              key={color.name}
+              onClick={() => changeColor(color.name)}
+              className="w-6 h-6 cursor-pointer rounded-full border hover:scale-110 transition-transform"
+              title={`${color.name} color`}
+              style={{
+                ...color.style,
+                borderColor:
+                  notes[currentPage]?.color === color.name
+                    ? "var(--btn)"
+                    : "var(--bg-sec)",
+                borderWidth:
+                  notes[currentPage]?.color === color.name ? "2px" : "1px",
+              }}
+            />
+          ))}
+        </motion.div>
+      )}
+
       <div className="bg-[var(--bg-sec)] txt-disabled p-1 px-2 rounded-full">
         {notes[currentPage]?.createdAt
           ? new Date(notes[currentPage].createdAt).toLocaleDateString() +
-          "\u00A0\u00A0\u00A0" +
-          new Date(notes[currentPage].createdAt).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+            "\u00A0\u00A0\u00A0" +
+            new Date(notes[currentPage].createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
           : "No date available"}
       </div>
     </div>
