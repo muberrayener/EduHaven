@@ -369,6 +369,38 @@ export const addCollaborator = async (req, res) => {
   }
 };
 
+export const removeCollaborator = async (req, res) => {
+  try {
+    const { noteId, collaboratorId } = req.params;
+    const currentUser = req.user;
+
+    const note = await Note.findById(noteId);
+    if (!note) return res.status(404).json({ error: "Note not found" });
+
+    if (note.owner.toString() !== currentUser._id.toString()) {
+      return res.status(403).json({ error: "Only the note owner can remove collaborators" });
+    }
+
+    const collaboratorIndex = note.collaborators.findIndex(
+      collab => collab._id.toString() === collaboratorId
+    );
+
+    if (collaboratorIndex === -1) {
+      return res.status(400).json({ error: "Collaborator not found" });
+    }
+
+    note.collaborators.splice(collaboratorIndex, 1);
+    await note.save();
+
+    await note.populate("collaborators.user", "Username Email");
+
+    res.status(200).json({ message: "Collaborator removed successfully", note });
+  } catch (error) {
+    console.error("Error removing collaborator:", error);
+    res.status(500).json({ error: "Failed to remove collaborator", details: error.message });
+  }
+};
+
 export const generateShareLink = async (req, res) => {
   try {
     const { noteId } = req.params;
