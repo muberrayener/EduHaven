@@ -23,6 +23,7 @@
     "cont": "file:",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",

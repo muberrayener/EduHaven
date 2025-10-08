@@ -11,6 +11,15 @@ import {
   updateNote,
 } from "@/api/NoteApi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
+
+const handleError = (error, defaultMsg) => {
+  if (error?.response?.status === 403) {
+    toast.error("Unauthorized: You do not have permission to perform this action.");
+  } else {
+    toast.error(`${defaultMsg}: ${error.message}`);
+  }
+};
 
 export const useNotes = () =>
   useQuery({
@@ -43,11 +52,9 @@ export const useCreateNote = () => {
     mutationFn: createNote,
     onSuccess: (newNote) => {
       queryClient.setQueryData(["notes"], (old = []) => [...old, newNote]);
-      queryClient.setQueryData(["archivedNotes"], (old = []) => [
-        ...old,
-        newNote,
-      ]);
+      queryClient.setQueryData(["archivedNotes"], (old = []) => [...old, newNote]);
     },
+    onError: (error) => handleError(error, "Failed to create note"),
   });
 };
 
@@ -64,6 +71,7 @@ export const useUpdateNote = () => {
       );
       queryClient.setQueryData(["notes", updatedNote._id], updatedNote);
     },
+    onError: (error) => handleError(error, "Failed to update note"),
   });
 };
 
@@ -82,6 +90,7 @@ export const useDeleteNote = () => {
         old.filter((note) => note._id !== id)
       );
     },
+    onError: (error) => handleError(error, "Failed to delete note"),
   });
 };
 
@@ -110,6 +119,7 @@ export const useArchiveNote = () => {
 
       queryClient.setQueryData(["notes", updatedNote._id], updatedNote);
     },
+    onError: (error) => handleError(error, "Failed to archive/unarchive note"),
   });
 };
 
@@ -129,6 +139,7 @@ export const useTrashNote = () => {
         trashedNote,
       ]);
     },
+    onError: (error) => handleError(error, "Failed to trash note"),
   });
 };
 
@@ -142,5 +153,6 @@ export const useRestoreTrashedNote = () => {
         old.filter((note) => note._id !== restoredNote._id)
       );
     },
+    onError: (error) => handleError(error, "Failed to restore note"),
   });
 };
