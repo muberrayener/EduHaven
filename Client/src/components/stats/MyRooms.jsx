@@ -1,11 +1,11 @@
 // components/ProfileCard/ProfileCard.jsx
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axiosInstance from "@/utils/axios";
-import { jwtDecode } from "jwt-decode";
-import { MessageCircle, ThumbsUp, UserPlus, Activity } from "lucide-react"; // Added DoorOpen
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
+import { MessageCircle, Activity } from "lucide-react";
+
 
 // Helper function to truncate text
 const truncateText = (text, maxLength) => {
@@ -13,23 +13,63 @@ const truncateText = (text, maxLength) => {
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 };
 
-
 const MyRooms = ({ isCurrentUser, myRooms }) => {
-  // ... keep all your state & logic here
   const navigate = useNavigate();
+  const [joinStatus, setJoinStatus] = useState({}); // status per room
+
+  const updateJoinStatus = (roomId, status) => {
+    setJoinStatus(prev => ({ ...prev, [roomId]: status }));
+  };
 
   const handleJoin = async (room) => {
-    // Prevent joining if already joined
-    if (room.isJoined) return;
+    const status = joinStatus[room._id] || (room.isJoined ? 'member' : 'none');
 
+    if (room.isPrivate) {
+      if (status === "member") {
+        try {
+          await axiosInstance.post(`/session-room/${room._id}/join`);
+          toast.success("Entering room...");
+          navigate(`/session/${room._id}`);
+        } catch (err) {
+          toast.error(err.response?.data?.error || "Failed to enter room");
+        }
+      } else if (status === "pending") {
+        toast.info("Your join request is pending approval.");
+      } else {
+        try {
+          await axiosInstance.post(`/session-room/${room._id}/request-join`);
+          updateJoinStatus(room._id, "pending");
+          toast.success("Join request sent.");
+        } catch (err) {
+          const message = err.response?.data?.error;
+          if (message?.toLowerCase().includes("already a member")) {
+            updateJoinStatus(room._id, "member");
+            toast.success("You are already a member. Entering room...");
+            navigate(`/session/${room._id}`);
+          } else {
+            toast.error(message || "Failed to send request");
+          }
+        }
+      }
+    } else {
+      try {
+        await axiosInstance.post(`/session-room/${room._id}/join`);
+        updateJoinStatus(room._id, "member");
+        toast.success("Joined room.");
+        navigate(`/session/${room._id}`);
+      } catch (err) {
+        toast.error(err.response?.data?.error || "Failed to join room");
+      }
+    }
+  };
+
+  const handleCancelRequest = async (room) => {
     try {
-      // Logic to join the room
-      const res = await axiosInstance.post(`/session-room/${room._id}/join`); 
-      toast.success(`Joined room: ${room.name}`);
-      navigate(`/session/${room._id}`);
+      await axiosInstance.post(`/session-room/${room._id}/cancel-request`);
+      updateJoinStatus(room._id, "none");
+      toast.success("Join request canceled.");
     } catch (err) {
-      toast.error("Failed to join room");
-      console.error(err);
+      toast.error(err.response?.data?.error || "Failed to cancel request");
     }
   };
 
@@ -37,7 +77,7 @@ const MyRooms = ({ isCurrentUser, myRooms }) => {
     <div className="bg-gradient-to-br from-indigo-500/50 to-purple-500/5 rounded-3xl shadow-2xl p-6 w-full h-fit relative overflow-hidden backdrop-blur-sm border border-white/10">
       <div className="inner">
         <h2 className="text-3xl font-extrabold text-center text-white drop-shadow-lg mb-6 tracking-wider">
-          {isCurrentUser ? 'My Rooms ✨' : "User's Rooms ✨"}
+          {isCurrentUser ? 'My Rooms' : "User's Rooms"}
         </h2>
 
         {myRooms.length === 0 ? (
@@ -47,23 +87,18 @@ const MyRooms = ({ isCurrentUser, myRooms }) => {
         ) : (
           <ul className="space-y-4">
             {myRooms.map((room) => {
-              const isJoined = room.isJoined; 
+              const status = joinStatus[room._id] || (room.isJoined ? 'member' : 'none');
               const categoryText = truncateText(room.cateogery, 25);
-              const buttonText = isJoined ? 'Joined' : 'Join Session';
 
               return (
                 <li
                   key={room._id}
                   className={`flex items-center justify-between p-4 bg-white/10 rounded-xl border border-white/20 shadow-md transition-all duration-300 ${
-                    isJoined
-                      ? 'opacity-75 cursor-default'
-                      : 'hover:scale-[1.02] hover:bg-white/20 hover:shadow-xl'
+                    status === 'member' ? 'opacity-75 cursor-default' : 'hover:scale-[1.02] hover:bg-white/20 hover:shadow-xl'
                   }`}
                 >
-                  {/* Room Details Container */}
-                  <div 
-                    className="flex flex-col text-white min-w-0 pr-4 flex-grow cursor-pointer"
-                  >
+                  {/* Room Details */}
+                  <div className="flex flex-col text-white min-w-0 pr-4 flex-grow cursor-pointer">
                     <span className="font-semibold text-black text-xl truncate mb-1" title={room.name}>
                       {room.name}
                     </span>
@@ -72,21 +107,32 @@ const MyRooms = ({ isCurrentUser, myRooms }) => {
                     </span>
                   </div>
 
-                  {/* Join Button (Disabled/Gray if already joined) */}
-                  <Button
-                    onClick={() => handleJoin(room)}
-                    disabled={isJoined}
-                    className={`
-                      ml-4 px-4 py-2 flex items-center space-x-2 rounded-full font-bold transition-colors duration-300 text-sm shadow-lg
-                      ${
-                        isJoined
-                          ? 'bg-gray-500/80 cursor-not-allowed text-gray-200'
-                          : 'bg-indigo-600 hover:bg-indigo-700 text-white transform hover:translate-y-[-1px]'
-                      }
-                    `}
-                  >
-                    <Activity className="w-5 h-5" />
-                  </Button>
+                  {/* Join / Request Button */}
+                  {room.isPrivate ? (
+                    status === "member" ? (
+                      <Button onClick={() => handleJoin(room)} className="w-full flex items-center justify-center gap-2">
+                        
+                        Enter Room
+                      </Button>
+                    ) : status === "pending" ? (
+                      <Button onClick={() => handleCancelRequest(room)} className="w-full flex items-center justify-center gap-2">
+                        Cancel Request
+                      </Button>
+                    ) : (
+                      <Button onClick={() => handleJoin(room)} className="w-full flex items-center justify-center gap-2">
+                        Request Join
+                      </Button>
+                    )
+                  ) : status !== "member" ? (
+                    <Button onClick={() => handleJoin(room)} className="w-full flex items-center justify-center gap-2">
+                      
+                      Join
+                    </Button>
+                  ) : (
+                    <Button disabled className="w-full flex items-center justify-center gap-2 bg-gray-400/30 cursor-not-allowed">
+                      Already Joined
+                    </Button>
+                  )}
                 </li>
               );
             })}
