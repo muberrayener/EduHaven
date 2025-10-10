@@ -31,6 +31,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
   const [hasGivenKudos, setHasGivenKudos] = useState(false);
   const [friendRequestStatus, setFriendRequestStatus] = useState("Add Friend");
   const [isFriendRequestLoading, setIsFriendRequestLoading] = useState(false);
+  const [userRoom, setUserRoom] = useState([]);
   const [refetchFriends, setRefetchFriends] = useState(false)  
 
   const { mutate: sendRequest } = useSendRequest();
@@ -262,6 +263,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
         popupRef={popupRef}
       />
 
+
       <div className="mx-4">
         {/* Friends Popup */}
         <FriendsPopup
@@ -352,6 +354,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
         }
       </div>
 
+
       {user.FieldOfStudy ||
       user.OtherDetails?.skills ||
       user.OtherDetails?.interests ||
@@ -361,6 +364,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
       ) : (
         <div className="h-3"></div>
       )}
+
     </div>
   );
 };
