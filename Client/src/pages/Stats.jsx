@@ -12,7 +12,7 @@ import Leaderboard from "../components/stats/Leaderboard";
 import Test from "../components/stats/Test.jsx";
 import AdCard from "@/components/AdCard";
 import axiosInstance from "@/utils/axios";
-import MyRooms from "@/components/stats/MyRooms.jsx";
+import UserRoomsCard from "@/components/session/UserRoomsCard.jsx";
 
 const Stats = ({ isCurrentUser = false }) => {
   const { userId } = useParams();
@@ -121,7 +121,7 @@ const Stats = ({ isCurrentUser = false }) => {
         <div className="lg:w-[20%] min-w-72 space-y-3 2xl:space-y-6">
           <ProfileCard isCurrentUser={isCurrentUser} user={userStats} />
           {(isCurrentUser ? myRooms : userRooms)?.length > 0 && (
-            <MyRooms isCurrentUser={isCurrentUser} myRooms={isCurrentUser ? myRooms : userRooms} />
+            <UserRoomsCard isCurrentUser={isCurrentUser} myRooms={isCurrentUser ? myRooms : userRooms} />
           )}
 
           {/*  Here we will add room created by me */}
