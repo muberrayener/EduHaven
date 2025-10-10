@@ -14,6 +14,7 @@ const SharePopup = ({ note, onClose, onShare }) => {
   const [accessLevel, setAccessLevel] = useState("view");
   const [loading, setLoading] = useState(false);
   const [generatingLink, setGeneratingLink] = useState(false);
+  const [collaborators, setCollaborators] = useState(note?.collaborators || []);
 
   // Generate share link for public notes
   const generateShareLink = async () => {
@@ -102,6 +103,7 @@ const SharePopup = ({ note, onClose, onShare }) => {
     try {
       await onShare(note._id, selectedUser._id, accessLevel);
       toast.success(`Note shared successfully with ${selectedUser.FirstName + " " + selectedUser.LastName + "(" + selectedUser.Username + ")"}!`);
+      setCollaborators((prev) => [...prev, { user: selectedUser, access: accessLevel }]);
       setSelectedUser(null);
       setSearchTerm("");
       setUsers([]);
@@ -111,10 +113,18 @@ const SharePopup = ({ note, onClose, onShare }) => {
     }
   };
 
-  const handleDeleteCollaborator = (collaborator) => {
-    console.log("Delete button clicked for:", collaborator);
-    // TODO: Implement collaborator removal
-    toast.info("Delete functionality to be implemented");
+  const handleDeleteCollaborator = async (collaborator) => {
+    try {
+      // console.log(collaborators)
+      await axiosInstance.delete(`/note/${note._id}/collaborators/${collaborator._id}`);
+      setCollaborators((prev) =>
+        prev.filter((c) => c.user._id !== collaborator.user._id)
+      );
+      toast.success("Collaborator removed successfully");
+    } catch (error) {
+      console.error("Error removing collaborator:", error);
+      toast.error(error.response?.data?.error || "Failed to remove collaborator");
+    }
   };
 
   return (
@@ -231,13 +241,13 @@ const SharePopup = ({ note, onClose, onShare }) => {
           </div>
 
           {/* Section 2: Current Collaborators */}
-          {note?.collaborators && note.collaborators.length > 0 && (
+          {collaborators && collaborators.length > 0 && (
             <div>
               <h4 className="text-sm font-medium mb-3 text-[var(--txt)]">
                 People with access
               </h4>
               <div className="space-y-2">
-                {note.collaborators.map((collaborator) => (
+                {collaborators.map((collaborator) => (
                   <div
                     key={collaborator._id}
                     className="flex items-center justify-between p-2 rounded-lg hover:bg-[var(--bg-ter)]"
@@ -247,11 +257,11 @@ const SharePopup = ({ note, onClose, onShare }) => {
                         <User size={16} className="text-[var(--btn-txt)]" />
                       </div>
                       <div className="text-[var(--txt)] text-sm">
-                          {collaborator.user.FirstName + " " + collaborator.user.LastName}
-                        </div>
-                        <div className="text-xs text-[var(--txt-dim)]">
-                          {collaborator.user.Email} • {collaborator.access}
-                        </div>
+                        {collaborator.user.FirstName + " " + collaborator.user.LastName}
+                      </div>
+                      <div className="text-xs text-[var(--txt-dim)]">
+                        {collaborator.user.Email} • {collaborator.access}
+                      </div>
                     </div>
                     <Button
                       variant="transparent"
