@@ -21,7 +21,13 @@ import SessionRoom from "../Model/SessionModel.js";
 export const getRoomLists = async (req, res) => {
   try {
     const userId = req.user._id;
-    const rooms = await SessionRoom.find().sort({ createdAt: -1 }).lean();
+    const rooms = await SessionRoom.find()
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "pendingRequests",
+        select: "Username ProfilePicture Bio OtherDetails",
+      })
+      .lean();
 
     const myRooms = [];
     const otherRooms = [];
