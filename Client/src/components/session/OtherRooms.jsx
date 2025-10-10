@@ -82,7 +82,7 @@ export default function OtherRoom({ otherRooms, isLoading = false }) {
       {/* Header with Search */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
         <h1 className="text-xl 2xl:text-2xl font-semibold txt mb-2 sm:mb-0">
-          Session Rooms
+          Explore Rooms
         </h1>
 
         <input
