@@ -21,6 +21,9 @@ import morganMiddleware from "./logger/morganLogger.js";
 // import mongoSanitize
 import { mongoSecurity } from './security/mongoSanitize.js'
 
+// import qs [queryParser]
+import { queryParser } from "./security/queryParser.js";
+
 dotenv.config();
 
 // Polyfill fetch for Node (if needed)
@@ -40,6 +43,9 @@ export const CORS_ORIGIN =
 // security middleware
 applySecurity(app);
 applyCommonMiddleware(app);
+
+// queryParser
+app.use(queryParser);
 
 // mongoSanitize
 mongoSecurity(app);
