@@ -9,14 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
-const ProfileHeader = ({
-  user,
-  profilelink,
-  kudosCount,
-  friendsCount,
-  setShowPopup,
-  isCurrentUser,
-}) => {
+const ProfileHeader = ({ user, profilelink, isCurrentUser }) => {
   const handleCopyLink = () => {
     if (!profilelink) return;
     navigator.clipboard
@@ -36,11 +29,10 @@ const ProfileHeader = ({
 
       <div className="flex items-center gap-3">
         {isCurrentUser && (
-        <Link to={"/settings/"}>
-          <Edit3 className="h-6 w-6 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" />
-        </Link>
-      )}
-
+          <Link to="/settings/">
+            <Edit3 className="h-6 w-6 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" />
+          </Link>
+        )}
 
         {/* Dropdown for sharing profile link */}
         <DropdownMenu>
@@ -57,18 +49,6 @@ const ProfileHeader = ({
             <DropdownMenuItem onClick={handleCopyLink}>
               Copy Profile Link
             </DropdownMenuItem>
-            {/* <DropdownMenuItem
-              onClick={() => {
-                navigator.share
-                  ? navigator.share({
-                      title: "Check out this profile!",
-                      url: profilelink,
-                    })
-                  : toast.info("Native share not supported on this device");
-              }}
-            >
-              Share via Device
-            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

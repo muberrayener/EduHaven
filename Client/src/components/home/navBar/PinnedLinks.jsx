@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
-import {  ExternalLink, Plus, MoreHorizontal,} from "lucide-react";
+import { ExternalLink, Plus, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PopupContainer from "@/components/ui/Popup";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Helper to get domain from a URL
 function getDomain(url) {
@@ -112,6 +117,15 @@ function PinnedLinks() {
     setExtraLinks(updated);
   };
 
+  const handleAddNew = () => {
+    setEditItemId(null);
+    setTitle("");
+    setMainLink("");
+    setExtraLinks([]);
+    setShowModal(true);
+    setShowDropdown(false);
+  };
+
   // --- MODIFIED openWorkspace function ---
   const openWorkspace = (links) => {
     // If there's only one link, just open it without the popup check
@@ -196,7 +210,7 @@ function PinnedLinks() {
           ))}
 
           <Button
-            onClick={() => setShowModal(true)}
+            onClick={handleAddNew}
             variant="default"
             className="w-full mt-2 flex items-center gap-2 border-t border-gray-300/20 pt-3"
           >

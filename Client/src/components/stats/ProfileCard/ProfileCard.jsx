@@ -1,7 +1,7 @@
 // components/ProfileCard/ProfileCard.jsx
 import axiosInstance from "@/utils/axios";
 import { jwtDecode } from "jwt-decode";
-import { MessageCircle, ThumbsUp, UserPlus } from "lucide-react";
+import { MessageCircle, ThumbsUp, UserMinus, UserPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -10,50 +10,115 @@ import { Button } from "@/components/ui/button";
 import {
   useAcceptRequest,
   useCancelRequest,
+  useRemoveFriend,
   useSendRequest,
 } from "@/queries/friendQueries";
 import FriendsPopup from "./FriendsPopup";
 import ProfileDetails from "./ProfileDetails";
 import ProfileHeader from "./ProfileHeader";
 import ProfileSkeleton from "./ProfileSkeleton";
+import ConfirmRemoveFriendModal from "@/components/ConfirmRemoveFriendModal";
 
 const ProfileCard = ({ isCurrentUser = false }) => {
   // ... keep all your state & logic here
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
+  const [showRemoveFriendPopup, setShowRemoveFriendPopup] = useState(false);
   const [friendsList, setFriendsList] = useState([]);
+  const [showLink, setShowLink] = useState(false);
   const [kudosCount, setKudosCount] = useState(0);
   const [hasGivenKudos, setHasGivenKudos] = useState(false);
   const [friendRequestStatus, setFriendRequestStatus] = useState("Add Friend");
   const [isFriendRequestLoading, setIsFriendRequestLoading] = useState(false);
+  const [userRoom, setUserRoom] = useState([]);
+  const [refetchFriends, setRefetchFriends] = useState(false)  
 
   const { mutate: sendRequest } = useSendRequest();
   const { mutate: cancelRequest } = useCancelRequest();
   const { mutate: acceptRequest } = useAcceptRequest();
+  const { mutate: removeFriend } = useRemoveFriend();
 
   const { userId } = useParams();
+  const shareRef = useRef(null);
   const popupRef = useRef(null);
 
   const profilelink = user?._id
     ? `${window.location.origin}/user/${user._id}`
     : "";
 
+  const toggleLink = () => setShowLink((prev) => !prev);
+  const copyLink = () => {
+    if (!profilelink) return;
+    navigator.clipboard
+      .writeText(profilelink)
+      .then(() => {
+        toast.success("Copied ");
+        setShowLink(false);
+      })
+      .catch(() => toast.error("Not Copied "));
+  };
+
+  const confirmRemove = () => {
+    removeFriend(userId, {
+      onSuccess: () => {
+        setShowRemoveFriendPopup(false);
+        setFriendRequestStatus("Add Friend");
+        setRefetchFriends(prev => !prev);
+      },
+      onError: (error) => {
+        setShowRemoveFriendPopup(false);
+        toast.error(error.response?.data?.message || "Failed to remove friend");
+      }
+    });
+  };
+
+  const confirmCancel = () => {
+    setShowRemoveFriendPopup(false)
+  }
+
   const handleFriendRequestAction = async () => {
     if (isFriendRequestLoading) return;
 
     setIsFriendRequestLoading(true);
     if (friendRequestStatus === "Add Friend") {
-      sendRequest(userId);
-      setFriendRequestStatus("Cancel Request");
+      sendRequest(userId, {
+        onSuccess: () => {
+          setFriendRequestStatus("Cancel Request");
+          setIsFriendRequestLoading(false);
+        },
+        onError: (error) => {
+          toast.error(error.response?.data?.message || "Failed to send request");
+          setIsFriendRequestLoading(false);
+        }
+      });
     } else if (friendRequestStatus === "Cancel Request") {
-      cancelRequest(userId);
-      setFriendRequestStatus("Add Friend");
+      cancelRequest(userId, {
+        onSuccess: () => {
+          setFriendRequestStatus("Add Friend");
+          setIsFriendRequestLoading(false);
+        },
+        onError: (error) => {
+          toast.error(error.response?.data?.message || "Failed to cancel request");
+          setIsFriendRequestLoading(false);
+        }
+      });
     } else if (friendRequestStatus === "Accept Request") {
-      acceptRequest(userId);
-      setFriendRequestStatus("Friends");
+      acceptRequest(userId, {
+        onSuccess: () => {
+          setFriendRequestStatus("Friends");
+          setRefetchFriends(prev => !prev);
+          setIsFriendRequestLoading(false);
+        },
+        onError: (error) => {
+          toast.error(error.response?.data?.message || "Failed to accept request");
+          setIsFriendRequestLoading(false);
+        }
+      });
+    } else if (friendRequestStatus === "Friends") {
+      setShowRemoveFriendPopup(true);
+      setIsFriendRequestLoading(false);
     }
-    setIsFriendRequestLoading(false);
   };
 
   const handleGiveKudos = async () => {
@@ -80,6 +145,21 @@ const ProfileCard = ({ isCurrentUser = false }) => {
       toast.error(error.response?.data?.message || "Failed to give kudos.");
     }
   };
+
+  useEffect(() => {
+    if (showLink) {
+      const handleClickOutside = (event) => {
+        if (shareRef.current && !shareRef.current.contains(event.target)) {
+          setShowLink(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showLink]);
 
   useEffect(() => {
     // Fetch friends list + count for either current user or the profile user
@@ -120,7 +200,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
     if (isCurrentUser || userId) {
       fetchFriendsForUser();
     }
-  }, [isCurrentUser, userId]);
+  }, [isCurrentUser, userId, refetchFriends]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -173,10 +253,16 @@ const ProfileCard = ({ isCurrentUser = false }) => {
         isCurrentUser={isCurrentUser}
         user={user}
         profilelink={profilelink}
+        showLink={showLink}
+        toggleLink={toggleLink}
+        copyLink={copyLink}
+        shareRef={shareRef}
         kudosCount={kudosCount}
         friendsCount={friendsList.length}
         setShowPopup={setShowPopup}
+        popupRef={popupRef}
       />
+
 
       <div className="mx-4">
         {/* Friends Popup */}
@@ -237,19 +323,37 @@ const ProfileCard = ({ isCurrentUser = false }) => {
               onClick={handleFriendRequestAction}
               variant="default"
               className={`px-6 py-2 h-10 rounded-lg flex items-center space-x-2 w-full sm:w-auto text-center flex-1 text-nowrap cursor-pointer ${
-                friendRequestStatus === "Add Friend"
-                  ? "bg-purple-600 hover:bg-purple-700"
-                  : friendRequestStatus === "Cancel Request"
-                    ? "bg-purple-500 hover:bg-purple-600"
-                    : "bg-purple-400 hover:bg-purple-500"
+                 friendRequestStatus === "Cancel Request"
+                    ? "bg-white/20 hover:bg-white/30 text-[var(--text-primary)]"
+                    : ""
               }`}
             >
-              <UserPlus className="w-5 h-5" />
-              <span>{friendRequestStatus}</span>
+              {
+                friendRequestStatus === "Cancel Request" ?
+                <>
+                  <UserMinus className="w-5 h-5" />
+                  <span>{friendRequestStatus}</span>
+                </>
+                :
+                <>
+                  <UserPlus className="w-5 h-5" />
+                  <span>{friendRequestStatus}</span>
+                </>
+              }
             </Button>
           </div>
         )}
+
+        {
+          showRemoveFriendPopup && (
+            <ConfirmRemoveFriendModal 
+              onConfirm={confirmRemove}
+              onCancel={confirmCancel}
+            />
+          )
+        }
       </div>
+
 
       {user.FieldOfStudy ||
       user.OtherDetails?.skills ||
@@ -260,6 +364,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
       ) : (
         <div className="h-3"></div>
       )}
+
     </div>
   );
 };
