@@ -6,12 +6,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import RoomCard from "./RoomCard";
 import CreateRoomModal from "./CreateRoomModal";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export default function YourRooms({ myRooms }) {
   const [sessions, setSessions] = useState(myRooms);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setSessions(myRooms.map((r) => ({ ...r, joins: r.joins ?? 0 })));
@@ -48,6 +50,12 @@ export default function YourRooms({ myRooms }) {
     setRoomToDelete(null);
   };
 
+  const OpenProfile = (user) => {
+    if (user._id) {
+      navigate(`/user/${user._id}`, { replace: true });
+    }
+  };
+
   const handleRequest = async (roomId, targetUserId, action) => {
     try {
       await axiosInstance.post(`/session-room/${roomId}/handle-request`, {
@@ -59,15 +67,15 @@ export default function YourRooms({ myRooms }) {
         prev.map((room) =>
           room._id === roomId
             ? {
-              ...room,
-              pendingRequests: room.pendingRequests.filter(
-                (user) => user._id !== targetUserId
-              ),
-              members:
-                action === "approve"
-                  ? [...room.members, targetUserId]
-                  : room.members,
-            }
+                ...room,
+                pendingRequests: room.pendingRequests.filter(
+                  (user) => user._id !== targetUserId
+                ),
+                members:
+                  action === "approve"
+                    ? [...room.members, targetUserId]
+                    : room.members,
+              }
             : room
         )
       );
@@ -94,22 +102,31 @@ export default function YourRooms({ myRooms }) {
               room.pendingRequests &&
               room.pendingRequests.length > 0 && (
                 <div className="bg-gray-800/40 border border-gray-700/50 rounded-xl p-3 mt-2 space-y-2">
-                  <div className="font-semibold txt text-sm">Pending Join Requests ({room.pendingRequests.length}):</div>
+                  <div className="font-semibold txt text-sm">
+                    Pending Join Requests ({room.pendingRequests.length}):
+                  </div>
 
                   {room.pendingRequests.map((user) => (
                     <div
                       key={user._id}
-                      className="flex flex-col gap-2 p-2.5 bg-gray-700/50 rounded-lg"
+                      onClick={() => OpenProfile(user)}
+                      className="flex flex-col cursor-pointer gap-2 p-2.5 bg-gray-700/50 rounded-lg"
                     >
                       <div className="flex flex-col items-start gap-2.5">
                         <div className="flex justify-between items-center gap-2">
                           <img
-                            src={user.ProfilePicture || "https://ui-avatars.com/api/?name=" + user.Username}
+                            src={
+                              user.ProfilePicture ||
+                              "https://ui-avatars.com/api/?name=" +
+                                user.Username
+                            }
                             alt={user.Username}
                             className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                           />
                           <div className="flex-1 min-w-0">
-                            <span className="font-medium text-white block text-sm">{user.Username}</span>
+                            <span className="font-medium text-white block text-sm">
+                              {user.Username}
+                            </span>
                             <p className="text-xs text-gray-400 line-clamp-2 mt-0.5">
                               {user.Bio || "No bio provided"}
                             </p>
@@ -118,19 +135,28 @@ export default function YourRooms({ myRooms }) {
 
                         {user.OtherDetails?.skills && (
                           <div className="mb-2">
-                            <p className="text-xs font-medium text-gray-300 mb-1.5">Skills</p>
+                            <p className="text-xs font-medium text-gray-300 mb-1.5">
+                              Skills
+                            </p>
                             <div className="flex flex-wrap gap-1.5">
-                              {user.OtherDetails.skills.split(',').slice(0, 3).map((s, i) => (
-                                <span
-                                  key={`skill-${i}`}
-                                  className="inline-flex items-center px-2.5 py-1 bg-amber-900/40 text-amber-300 text-[10px] sm:text-xs rounded-full whitespace-nowrap border border-amber-700/30 hover:bg-amber-900/60 transition-colors"
-                                >
-                                  {s.trim()}
-                                </span>
-                              ))}
-                              {user.OtherDetails.skills.split(',').length > 3 && (
+                              {user.OtherDetails.skills
+                                .split(",")
+                                .slice(0, 3)
+                                .map((s, i) => (
+                                  <span
+                                    key={`skill-${i}`}
+                                    className="inline-flex items-center px-2.5 py-1 bg-amber-900/40 text-amber-300 text-[10px] sm:text-xs rounded-full whitespace-nowrap border border-amber-700/30 hover:bg-amber-900/60 transition-colors"
+                                  >
+                                    {s.trim()}
+                                  </span>
+                                ))}
+                              {user.OtherDetails.skills.split(",").length >
+                                3 && (
                                 <span className="text-gray-500 text-[10px] sm:text-xs px-2 py-1">
-                                  +{user.OtherDetails.skills.split(',').length - 3} more
+                                  +
+                                  {user.OtherDetails.skills.split(",").length -
+                                    3}{" "}
+                                  more
                                 </span>
                               )}
                             </div>
@@ -139,19 +165,28 @@ export default function YourRooms({ myRooms }) {
 
                         {user.OtherDetails?.interests && (
                           <div className="mb-4">
-                            <p className="text-xs font-medium text-gray-300 mb-1.5">Interests</p>
+                            <p className="text-xs font-medium text-gray-300 mb-1.5">
+                              Interests
+                            </p>
                             <div className="flex flex-wrap gap-1.5">
-                              {user.OtherDetails.interests.split(',').slice(0, 3).map((i, idx) => (
-                                <span
-                                  key={`interest-${idx}`}
-                                  className="inline-flex items-center px-2.5 py-1 bg-cyan-900/40 text-cyan-300 text-[10px] sm:text-xs rounded-full whitespace-nowrap border border-cyan-700/30 hover:bg-cyan-900/60 transition-colors"
-                                >
-                                  {i.trim()}
-                                </span>
-                              ))}
-                              {user.OtherDetails.interests.split(',').length > 3 && (
+                              {user.OtherDetails.interests
+                                .split(",")
+                                .slice(0, 3)
+                                .map((i, idx) => (
+                                  <span
+                                    key={`interest-${idx}`}
+                                    className="inline-flex items-center px-2.5 py-1 bg-cyan-900/40 text-cyan-300 text-[10px] sm:text-xs rounded-full whitespace-nowrap border border-cyan-700/30 hover:bg-cyan-900/60 transition-colors"
+                                  >
+                                    {i.trim()}
+                                  </span>
+                                ))}
+                              {user.OtherDetails.interests.split(",").length >
+                                3 && (
                                 <span className="text-gray-500 text-[10px] sm:text-xs px-2 py-1">
-                                  +{user.OtherDetails.interests.split(',').length - 3} more
+                                  +
+                                  {user.OtherDetails.interests.split(",")
+                                    .length - 3}{" "}
+                                  more
                                 </span>
                               )}
                             </div>
@@ -248,6 +283,6 @@ export default function YourRooms({ myRooms }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div >
+    </div>
   );
 }
