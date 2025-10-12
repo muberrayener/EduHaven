@@ -40,24 +40,32 @@ const createSocketRateLimit = (limiter, eventType) => {
       // Rate limit exceeded
       const remainingTime = Math.round(rejRes.msBeforeNext / 1000);
       const errorMessage = `Rate limit exceeded for ${eventType}. Try again in ${remainingTime} seconds.`;
-      
-      console.warn(`Rate limit exceeded for user ${socket.userId} on ${eventType}`);
-      
+
+      console.warn(
+        `Rate limit exceeded for user ${socket.userId} on ${eventType}`
+      );
+
       // Send error to client
       socket.emit("rate_limit_error", {
         eventType,
         message: errorMessage,
         retryAfter: remainingTime,
       });
-      
+
       return false; // Block the event
     }
   };
 };
 
 // Export configured rate limiters
-export const messageRateLimit = createSocketRateLimit(messageLimiter, "message");
-export const roomRateLimit = createSocketRateLimit(roomLimiter, "room_operation");
+export const messageRateLimit = createSocketRateLimit(
+  messageLimiter,
+  "message"
+);
+export const roomRateLimit = createSocketRateLimit(
+  roomLimiter,
+  "room_operation"
+);
 export const typingRateLimit = createSocketRateLimit(typingLimiter, "typing");
 
 // Export rate limiter stats for monitoring
