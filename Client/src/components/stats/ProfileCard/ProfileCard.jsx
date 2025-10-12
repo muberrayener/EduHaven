@@ -11,12 +11,14 @@ import {
   useAcceptRequest,
   useCancelRequest,
   useRemoveFriend,
+  useRemoveFriend,
   useSendRequest,
 } from "@/queries/friendQueries";
 import FriendsPopup from "./FriendsPopup";
 import ProfileDetails from "./ProfileDetails";
 import ProfileHeader from "./ProfileHeader";
 import ProfileSkeleton from "./ProfileSkeleton";
+import ConfirmRemoveFriendModal from "@/components/ConfirmRemoveFriendModal";
 import ConfirmRemoveFriendModal from "@/components/ConfirmRemoveFriendModal";
 
 const ProfileCard = ({ isCurrentUser = false }) => {
@@ -32,11 +34,12 @@ const ProfileCard = ({ isCurrentUser = false }) => {
   const [friendRequestStatus, setFriendRequestStatus] = useState("Add Friend");
   const [isFriendRequestLoading, setIsFriendRequestLoading] = useState(false);
   const [userRoom, setUserRoom] = useState([]);
-  const [refetchFriends, setRefetchFriends] = useState(false)  
+  const [refetchFriends, setRefetchFriends] = useState(false);
 
   const { mutate: sendRequest } = useSendRequest();
   const { mutate: cancelRequest } = useCancelRequest();
   const { mutate: acceptRequest } = useAcceptRequest();
+  const { mutate: removeFriend } = useRemoveFriend();
   const { mutate: removeFriend } = useRemoveFriend();
 
   const { userId } = useParams();
@@ -57,6 +60,24 @@ const ProfileCard = ({ isCurrentUser = false }) => {
         setShowLink(false);
       })
       .catch(() => toast.error("Not Copied "));
+  };
+
+  const confirmRemove = () => {
+    removeFriend(userId, {
+      onSuccess: () => {
+        setShowRemoveFriendPopup(false);
+        setFriendRequestStatus("Add Friend");
+        setRefetchFriends((prev) => !prev);
+      },
+      onError: (error) => {
+        setShowRemoveFriendPopup(false);
+        toast.error(error.response?.data?.message || "Failed to remove friend");
+      },
+    });
+  };
+
+  const confirmCancel = () => {
+    setShowRemoveFriendPopup(false);
   };
 
   const confirmRemove = () => {
@@ -88,9 +109,11 @@ const ProfileCard = ({ isCurrentUser = false }) => {
           setIsFriendRequestLoading(false);
         },
         onError: (error) => {
-          toast.error(error.response?.data?.message || "Failed to send request");
+          toast.error(
+            error.response?.data?.message || "Failed to send request"
+          );
           setIsFriendRequestLoading(false);
-        }
+        },
       });
     } else if (friendRequestStatus === "Cancel Request") {
       cancelRequest(userId, {
@@ -99,21 +122,25 @@ const ProfileCard = ({ isCurrentUser = false }) => {
           setIsFriendRequestLoading(false);
         },
         onError: (error) => {
-          toast.error(error.response?.data?.message || "Failed to cancel request");
+          toast.error(
+            error.response?.data?.message || "Failed to cancel request"
+          );
           setIsFriendRequestLoading(false);
-        }
+        },
       });
     } else if (friendRequestStatus === "Accept Request") {
       acceptRequest(userId, {
         onSuccess: () => {
           setFriendRequestStatus("Friends");
-          setRefetchFriends(prev => !prev);
+          setRefetchFriends((prev) => !prev);
           setIsFriendRequestLoading(false);
         },
         onError: (error) => {
-          toast.error(error.response?.data?.message || "Failed to accept request");
+          toast.error(
+            error.response?.data?.message || "Failed to accept request"
+          );
           setIsFriendRequestLoading(false);
-        }
+        },
       });
     } else if (friendRequestStatus === "Friends") {
       setShowRemoveFriendPopup(true);
@@ -200,6 +227,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
     if (isCurrentUser || userId) {
       fetchFriendsForUser();
     }
+  }, [isCurrentUser, userId, refetchFriends]);
   }, [isCurrentUser, userId, refetchFriends]);
 
   useEffect(() => {
@@ -323,35 +351,32 @@ const ProfileCard = ({ isCurrentUser = false }) => {
               onClick={handleFriendRequestAction}
               variant="default"
               className={`px-6 py-2 h-10 rounded-lg flex items-center space-x-2 w-full sm:w-auto text-center flex-1 text-nowrap cursor-pointer ${
-                 friendRequestStatus === "Cancel Request"
-                    ? "bg-white/20 hover:bg-white/30 text-[var(--text-primary)]"
-                    : ""
+                friendRequestStatus === "Cancel Request"
+                  ? "bg-white/20 hover:bg-white/30 text-[var(--text-primary)]"
+                  : ""
               }`}
             >
-              {
-                friendRequestStatus === "Cancel Request" ?
+              {friendRequestStatus === "Cancel Request" ? (
                 <>
                   <UserMinus className="w-5 h-5" />
                   <span>{friendRequestStatus}</span>
                 </>
-                :
+              ) : (
                 <>
                   <UserPlus className="w-5 h-5" />
                   <span>{friendRequestStatus}</span>
                 </>
-              }
+              )}
             </Button>
           </div>
         )}
 
-        {
-          showRemoveFriendPopup && (
-            <ConfirmRemoveFriendModal 
-              onConfirm={confirmRemove}
-              onCancel={confirmCancel}
-            />
-          )
-        }
+        {showRemoveFriendPopup && (
+          <ConfirmRemoveFriendModal
+            onConfirm={confirmRemove}
+            onCancel={confirmCancel}
+          />
+        )}
       </div>
 
 
