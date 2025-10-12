@@ -18,6 +18,12 @@ import {
 // morganMiddleware Import
 import morganMiddleware from "./logger/morganLogger.js";
 
+// import mongoSanitize
+import { mongoSecurity } from "./security/mongoSanitize.js";
+
+// import qs [queryParser]
+import { queryParser } from "./security/queryParser.js";
+
 dotenv.config();
 
 // Polyfill fetch for Node (if needed)
@@ -31,14 +37,19 @@ if (!globalThis.fetch) {
 const app = express();
 export const PORT = Number(process.env.PORT) || 3000;
 export const NODE_ENV = process.env.NODE_ENV || "development";
-export const CORS_ORIGIN =
-  process.env.CORS_ORIGIN || "http://localhost:5174";
+export const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5174";
 
 // security middleware
 applySecurity(app);
 applyCommonMiddleware(app);
 
-// morgan 
+// queryParser
+app.use(queryParser);
+
+// mongoSanitize
+mongoSecurity(app);
+
+// morgan
 app.use(morganMiddleware);
 
 mountHealthRoutes(app);

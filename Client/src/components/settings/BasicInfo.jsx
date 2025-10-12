@@ -37,8 +37,7 @@ export default function BasicInfo() {
   const [hasChanged, setHasChanged] = useState(false);
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  
-  
+
   const { toast } = useToast();
 
   useEffect(() => {

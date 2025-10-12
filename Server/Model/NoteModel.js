@@ -52,9 +52,26 @@ const noteSchema = new mongoose.Schema(
         },
       },
     ],
+    shareToken: {
+      type: String,
+      default: null,
+    },
+    shareTokenExpires: {
+      type: Date,
+      default: null,
+    },
   },
   {
-    timestamps: true, // adds createdAt & updatedAt
+    timestamps: true,
+  }
+);
+
+noteSchema.index(
+  { shareToken: 1 },
+  {
+    unique: true,
+    sparse: true,
+    partialFilterExpression: { shareToken: { $ne: null } },
   }
 );
 

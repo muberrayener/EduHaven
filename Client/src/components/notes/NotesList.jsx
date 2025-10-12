@@ -1,4 +1,5 @@
 import NoteCard from "./NoteCard";
+import axiosInstance from "@/utils/axios";
 
 const NotesList = ({
   pinnedNotes,
@@ -16,6 +17,34 @@ const NotesList = ({
   colors,
   getPlainTextPreview,
 }) => {
+  const handleShareNote = async (noteId, userId, accessLevel) => {
+    try {
+      const response = await axiosInstance.post(
+        `/note/${noteId}/collaborators`,
+        {
+          userId,
+          access: accessLevel,
+        }
+      );
+
+      if (response.status === 200) {
+        return Promise.resolve();
+      } else {
+        throw new Error(response.data.error || "Failed to share note");
+      }
+    } catch (error) {
+      if (error.response) {
+        throw new Error(
+          error.response.data?.error ||
+            error.response.data?.message ||
+            "Failed to share note"
+        );
+      } else {
+        throw error;
+      }
+    }
+  };
+
   return (
     <>
       {/* Pinned notes */}
@@ -47,6 +76,7 @@ const NotesList = ({
                 setShowColorPicker={setShowColorPicker}
                 colors={colors}
                 getPlainTextPreview={getPlainTextPreview}
+                onShare={handleShareNote}
               />
             ))}
           </div>
@@ -84,6 +114,7 @@ const NotesList = ({
                 setShowColorPicker={setShowColorPicker}
                 colors={colors}
                 getPlainTextPreview={getPlainTextPreview}
+                onShare={handleShareNote}
               />
             ))}
           </div>
