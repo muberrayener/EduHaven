@@ -1,12 +1,6 @@
-import { messageRateLimit, typingRateLimit } from "./rateLimiter.js";
-
 const handleMessageOperations = (socket, io) => {
   socket.on("send_message", async (data) => {
     try {
-      // Apply rate limiting
-      const allowed = await messageRateLimit(socket, data);
-      if (!allowed) return;
-
       const { roomId, message, messageType = "text" } = data;
 
       if (!message || !message.trim()) {
@@ -56,11 +50,7 @@ const handleMessageOperations = (socket, io) => {
     }
   });
 
-  socket.on("typing_start", async (data) => {
-    // Apply rate limiting
-    const allowed = await typingRateLimit(socket, data);
-    if (!allowed) return;
-
+  socket.on("typing_start", (data) => {
     const { roomId } = data;
     socket.to(roomId).emit("user_typing", {
       userId: socket.userId,
@@ -69,11 +59,7 @@ const handleMessageOperations = (socket, io) => {
     });
   });
 
-  socket.on("typing_stop", async (data) => {
-    // Apply rate limiting
-    const allowed = await typingRateLimit(socket, data);
-    if (!allowed) return;
-
+  socket.on("typing_stop", (data) => {
     const { roomId } = data;
     socket.to(roomId).emit("user_typing", {
       userId: socket.userId,

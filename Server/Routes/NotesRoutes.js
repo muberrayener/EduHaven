@@ -15,10 +15,6 @@ import {
   restoreNote,
   updateNote,
   uploadNoteImage,
-  addCollaborator,
-  removeCollaborator,
-  generateShareLink,
-  getSharedNote,
 } from "../Controller/NotesController.js";
 
 import authMiddleware from "../Middlewares/authMiddleware.js";
@@ -113,15 +109,5 @@ router.put(
 
 router.delete("/:id", authMiddleware, deleteNote);
 router.post("/deleteimage", authMiddleware, deleteNoteImage);
-
-router.post("/:noteId/collaborators", authMiddleware, addCollaborator);
-router.delete(
-  "/:noteId/collaborators/:collaboratorId",
-  authMiddleware,
-  removeCollaborator
-);
-
-router.post("/:noteId/generate-share-link", authMiddleware, generateShareLink);
-router.get("/shared/:shareToken", getSharedNote);
 
 export default router;

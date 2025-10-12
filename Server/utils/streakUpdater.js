@@ -54,7 +54,8 @@ export const updateStreaks = async (userId) => {
       if (diffDays > 1) {
         user.streaks.current = 0;
       }
-    } else {
+    }
+    else{
       user.streaks.current = 0;
     }
   }

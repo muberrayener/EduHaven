@@ -10,3 +10,4 @@ export async function generateUsername(base) {
   const clean = sanitizeBase(base);
   return `${clean}_${nanoid()}`; // e.g. "john_ab12x"
 }
+

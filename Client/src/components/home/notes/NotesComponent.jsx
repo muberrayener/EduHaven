@@ -5,18 +5,6 @@ import TopControls from "./TopControls";
 import BottomControls from "./BottomControls";
 import NoteContent from "./content";
 import { motion, AnimatePresence } from "framer-motion";
-import "@/components/notes/note.css";
-
-const colors = [
-  { name: "default", style: { backgroundColor: "var(--note-default)" } },
-  { name: "red", style: { backgroundColor: "var(--note-red)" } },
-  { name: "orange", style: { backgroundColor: "var(--note-orange)" } },
-  { name: "yellow", style: { backgroundColor: "var(--note-yellow)" } },
-  { name: "green", style: { backgroundColor: "var(--note-green)" } },
-  { name: "blue", style: { backgroundColor: "var(--note-blue)" } },
-  { name: "purple", style: { backgroundColor: "var(--note-purple)" } },
-  { name: "pink", style: { backgroundColor: "var(--note-pink)" } },
-];
 
 // for framer motion left/right moving animation
 const variants = {
@@ -48,7 +36,6 @@ function NotesComponent() {
   const [rotate, setRotate] = useState(false); // to indicate when tick icon when it starts saving.
   const [currentPage, setCurrentPage] = useState(0);
   const [direction, setDirection] = useState(0);
-  const [showColorPicker, setShowColorPicker] = useState(false);
 
   useEffect(() => {
     fetchNotes();
@@ -87,14 +74,9 @@ function NotesComponent() {
     }
   };
 
-  // Handled adding new page at the start
+  // Handled adding new page at the start 
   const addNewPage = () => {
-    const newNote = {
-      title: "",
-      content: "",
-      date: new Date(),
-      color: "default",
-    };
+    const newNote = { title: "", content: "", date: new Date() };
     // Add the new note to the beginning of the array
     setNotes((prevNotes) => [newNote, ...prevNotes]);
     setCurrentPage(0);
@@ -129,7 +111,6 @@ function NotesComponent() {
       const response = await axiosInstance.post(`/note`, {
         title: title,
         content: content,
-        color: "default",
       });
 
       if (response.data.success) {
@@ -141,38 +122,6 @@ function NotesComponent() {
         err.response?.data?.error || "Failed to add note try refreshing page"
       );
       console.log(err);
-    }
-  };
-
-  const changeColor = async (color) => {
-    const noteIndex = currentPage;
-    const noteId = notes[noteIndex]?._id;
-
-    setNotes((prevNotes) =>
-      prevNotes.map((note, index) =>
-        index === noteIndex ? { ...note, color } : note
-      )
-    );
-
-    setShowColorPicker(false);
-
-    if (noteId) {
-      try {
-        await axiosInstance.put(`/note/${noteId}`, { color });
-        setRotate(true);
-        setTimeout(() => setIsSynced(true), 700);
-      } catch (err) {
-        console.error("Error updating note color:", err);
-        setError("Failed to save color change");
-        // Revert the change
-        setNotes((prevNotes) =>
-          prevNotes.map((note, index) =>
-            index === noteIndex
-              ? { ...note, color: note.color || "default" }
-              : note
-          )
-        );
-      }
     }
   };
 
@@ -250,11 +199,6 @@ function NotesComponent() {
     }
   };
 
-  const getColorStyle = (colorName) => {
-    const color = colors.find((c) => c.name === colorName);
-    return color ? color.style : colors[0].style;
-  };
-
   return (
     <div className="group relative w-full h-[404px] rounded-3xl mx-auto overflow-hidden bg- red-500">
       <TopControls
@@ -273,10 +217,7 @@ function NotesComponent() {
           animate="center"
           exit="exit"
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="group txt rounded-3xl py-6 pb-3 2xl:px-3 shadow z-10 absolute w-full overflow-hidden"
-          style={{
-            ...getColorStyle(notes[currentPage]?.color || "default"),
-          }}
+          className="group bg-sec txt rounded-3xl py-6 pb-3 2xl:px-3 shadow z-10 absolute w-full overflow-hidden"
         >
           {error && console.error(error)}
 
@@ -307,10 +248,6 @@ function NotesComponent() {
             notes={notes}
             currentPage={currentPage}
             onDelete={handleDeleteNote}
-            colors={colors}
-            showColorPicker={showColorPicker}
-            setShowColorPicker={setShowColorPicker}
-            changeColor={changeColor}
           />
         </motion.div>
       </AnimatePresence>

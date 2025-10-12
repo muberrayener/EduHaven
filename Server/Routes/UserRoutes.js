@@ -74,7 +74,7 @@ router.put(
   authMiddleware,
   updateProfileValidationRules(),
   validate,
-  sanitizeFields(["Bio"]),
+  sanitizeFields(["Bio", "OtherDetails"]),
   updateProfile
 );
 

@@ -27,8 +27,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AuthLayout from "./components/AuthLayout";
 import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
-import SharedNotePage from "./pages/SharedNotePage";
-import { ToastProvider } from "./contexts/ToastContext";
+import { ToastProvider } from './contexts/ToastContext';
 
 function App() {
   const queryClient = new QueryClient();
@@ -43,10 +42,7 @@ function App() {
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Home />} />
                   <Route path="session" element={<Session />} />
-                  <Route
-                    path="stats"
-                    element={<Stats isCurrentUser={true} />}
-                  />
+                  <Route path="stats" element={<Stats isCurrentUser={true} />} />
                   <Route
                     path="user/:userId"
                     element={<Stats isCurrentUser={false} />}
@@ -79,10 +75,6 @@ function App() {
                 <Route path="/signout" element={<Signout />} />
                 <Route path="session/:id" element={<StudyRoom />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route
-                  path="/note/shared/:shareToken"
-                  element={<SharedNotePage />}
-                />
                 <Route path="*" element={<PageNotFound />} />
               </Routes>
             </RouterSelector>

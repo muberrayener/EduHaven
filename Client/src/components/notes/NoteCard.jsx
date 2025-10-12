@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import SharePopup from "./SharePopup";
 
 const NoteCard = ({
   note,
@@ -19,14 +18,12 @@ const NoteCard = ({
   onArchive,
   onExport,
   onColorChange,
-  onShare,
   showColorPicker,
   setShowColorPicker,
   colors,
   getPlainTextPreview,
 }) => {
   const [hovered, setHovered] = useState(false);
-  const [showSharePopup, setShowSharePopup] = useState(false);
 
   const getColorStyle = (colorName) => {
     const color = colors.find((c) => c.name === colorName);
@@ -93,7 +90,8 @@ const NoteCard = ({
 
       {hovered && (
         <motion.div
-          className="absolute bottom-2 left-2 right-2 flex justify-between items-center gap-2 px-2 py-1 rounded-lg bg-[var(--bg-ter)]"
+          className="absolute bottom-2 left-2 right-2 flex justify-between items-center gap-2 px-2 py-1 rounded-lg"
+          style={{ backgroundColor: "var(--bg-ter)" }}
           onClick={(e) => e.stopPropagation()}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -106,7 +104,7 @@ const NoteCard = ({
             }
             variant="transparent"
             size="icon"
-            className="p-1 rounded hover:bg-[var(--bg-secondary)]"
+            className="p-1 rounded hover:bg-black/10"
           >
             <Palette size={16} />
           </Button>
@@ -115,7 +113,7 @@ const NoteCard = ({
             onClick={() => onArchive(note)}
             variant="transparent"
             size="icon"
-            className="p-1 rounded hover:bg-[var(--bg-secondary)]"
+            className="p-1 rounded hover:bg-black/10"
           >
             <Archive size={16} />
           </Button>
@@ -124,19 +122,16 @@ const NoteCard = ({
             onClick={() => onExport(note)}
             variant="transparent"
             size="icon"
-            className="p-1 rounded hover:bg-[var(--bg-secondary)]"
+            className="p-1 rounded hover:bg-black/10"
           >
             <Download size={16} />
           </Button>
 
           <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowSharePopup(true);
-            }}
+            disabled
             variant="transparent"
             size="icon"
-            className="p-1 rounded hover:bg-[var(--bg-secondary)]"
+            className="p-1 rounded opacity-40 cursor-not-allowed"
           >
             <UserPlus size={16} />
           </Button>
@@ -145,7 +140,7 @@ const NoteCard = ({
             onClick={() => onSendToTrash(note?._id)}
             variant="transparent"
             size="icon"
-            className="p-1 rounded hover:bg-[var(--bg-secondary)]"
+            className="p-1 rounded hover:bg-black/10"
           >
             <Trash2 size={16} />
           </Button>
@@ -154,7 +149,7 @@ const NoteCard = ({
 
       {showColorPicker === note?._id && (
         <motion.div
-          className="absolute bottom-12 left-2 border border-[var(--bg-ter)] p-2 shadow-lg z-20 flex gap-1 flex-wrap bg-[var(--bg-ter)] rounded-lg"
+          className="absolute bottom-12 left-2 border p-2 shadow-lg z-20 flex gap-1 flex-wrap bg-[var(--bg-ter)] rounded-lg"
           onClick={(e) => e.stopPropagation()}
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -167,22 +162,12 @@ const NoteCard = ({
               style={{
                 ...color.style,
                 borderColor:
-                  note?.color === color.name
-                    ? "var(--btn)"
-                    : "var(--bg-secondary)",
+                  note?.color === color.name ? "var(--btn)" : "var(--bg-sec)",
                 borderWidth: note?.color === color.name ? "2px" : "1px",
               }}
             />
           ))}
         </motion.div>
-      )}
-
-      {showSharePopup && (
-        <SharePopup
-          note={note}
-          onClose={() => setShowSharePopup(false)}
-          onShare={onShare}
-        />
       )}
     </div>
   );

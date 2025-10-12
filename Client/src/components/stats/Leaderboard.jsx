@@ -14,6 +14,7 @@ const LeaderboardItemSkeleton = () => {
   return (
     <div className="flex items-center justify-between px-4 py-3 transition-all">
       <div className="flex gap-4 items-center justify-between w-full">
+
         <div className="w-8 h-6 rounded-full bg-ter animate-pulse" />
 
         <div className="flex  items-center flex-1 gap-2">
@@ -201,8 +202,7 @@ const Leaderboard = () => {
                       to={isCurrentUser ? "/stats" : `/user/${user.userId}`}
                       className="text-center font-semibold flex items-center gap-2"
                     >
-                      {user.profilePicture &&
-                      !imageErrorIds.has(user.userId) ? (
+                      {user.profilePicture && !imageErrorIds.has(user.userId) ? (
                         <img
                           src={user.profilePicture}
                           alt={`${user.username}'s avatar`}
