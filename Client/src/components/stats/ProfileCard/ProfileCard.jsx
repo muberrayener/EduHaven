@@ -11,14 +11,12 @@ import {
   useAcceptRequest,
   useCancelRequest,
   useRemoveFriend,
-  useRemoveFriend,
   useSendRequest,
 } from "@/queries/friendQueries";
 import FriendsPopup from "./FriendsPopup";
 import ProfileDetails from "./ProfileDetails";
 import ProfileHeader from "./ProfileHeader";
 import ProfileSkeleton from "./ProfileSkeleton";
-import ConfirmRemoveFriendModal from "@/components/ConfirmRemoveFriendModal";
 import ConfirmRemoveFriendModal from "@/components/ConfirmRemoveFriendModal";
 
 const ProfileCard = ({ isCurrentUser = false }) => {
@@ -39,7 +37,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
   const { mutate: sendRequest } = useSendRequest();
   const { mutate: cancelRequest } = useCancelRequest();
   const { mutate: acceptRequest } = useAcceptRequest();
-  const { mutate: removeFriend } = useRemoveFriend();
   const { mutate: removeFriend } = useRemoveFriend();
 
   const { userId } = useParams();
@@ -79,24 +76,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
   const confirmCancel = () => {
     setShowRemoveFriendPopup(false);
   };
-
-  const confirmRemove = () => {
-    removeFriend(userId, {
-      onSuccess: () => {
-        setShowRemoveFriendPopup(false);
-        setFriendRequestStatus("Add Friend");
-        setRefetchFriends(prev => !prev);
-      },
-      onError: (error) => {
-        setShowRemoveFriendPopup(false);
-        toast.error(error.response?.data?.message || "Failed to remove friend");
-      }
-    });
-  };
-
-  const confirmCancel = () => {
-    setShowRemoveFriendPopup(false)
-  }
 
   const handleFriendRequestAction = async () => {
     if (isFriendRequestLoading) return;
@@ -228,7 +207,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
       fetchFriendsForUser();
     }
   }, [isCurrentUser, userId, refetchFriends]);
-  }, [isCurrentUser, userId, refetchFriends]);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -290,7 +268,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
         setShowPopup={setShowPopup}
         popupRef={popupRef}
       />
-
 
       <div className="mx-4">
         {/* Friends Popup */}
@@ -379,7 +356,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
         )}
       </div>
 
-
       {user.FieldOfStudy ||
       user.OtherDetails?.skills ||
       user.OtherDetails?.interests ||
@@ -389,7 +365,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
       ) : (
         <div className="h-3"></div>
       )}
-
     </div>
   );
 };

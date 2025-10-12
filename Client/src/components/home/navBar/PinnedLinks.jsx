@@ -125,7 +125,7 @@ function PinnedLinks() {
     setShowModal(true);
     setShowDropdown(false);
   };
-
+  
   // --- MODIFIED openWorkspace function ---
   const openWorkspace = (links) => {
     // If there's only one link, just open it without the popup check
