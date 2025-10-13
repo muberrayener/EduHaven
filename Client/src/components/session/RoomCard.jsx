@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { toast } from "react-toastify";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,15 +120,16 @@ export default function RoomCard({ room, onDelete, showCategory, loading }) {
     } else {
       try {
         const res = await axiosInstance.post(`/session-room/${room._id}/join`);
+
+        if (joinStatus === "member") {
+          toast.success("Entering room...");
+        } else {
+          toast.success("Joining room...");
+        }
         setJoinStatus("member");
-        import("react-toastify").then(({ toast }) => {
-          toast.success(res.data?.message || "Joined room.");
-        });
         navigate(`/session/${room._id}`);
       } catch (err) {
-        import("react-toastify").then(({ toast }) => {
-          toast.error(err.response?.data?.error || "Failed to join room");
-        });
+        toast.error(err.response?.data?.error || "Failed to join room");
       }
     }
   };
@@ -313,20 +315,21 @@ export default function RoomCard({ room, onDelete, showCategory, loading }) {
             Request Join
           </Button>
         )
-      ) : joinStatus !== "member" ? (
+      ) : joinStatus === "member" ? (
+        <Button
+          onClick={handleJoin}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          <Activity className="w-5 h-5" />
+          Enter Room
+        </Button>
+      ) : (
         <Button
           onClick={handleJoin}
           className="w-full flex items-center justify-center gap-2"
         >
           <Activity className="w-5 h-5" />
           Join
-        </Button>
-      ) : (
-        <Button
-          disabled
-          className="w-full flex items-center justify-center gap-2 bg-gray-400/30 cursor-not-allowed"
-        >
-          Already Joined
         </Button>
       )}
     </div>
