@@ -15,7 +15,8 @@ import {
   setupGracefulShutdown,
 } from "./Config/shutdownConfig.js";
 import morganMiddleware from "./logger/morganLogger.js";
-import { mongoSecurity } from './security/mongoSanitize.js'
+import { mongoSecurity } from './security/mongoSanitize.js';
+import { queryParser } from "./security/queryParser.js";
 import cron from "node-cron";
 import { updateLeaderboardBadges } from "./utils/leaderboardBadgeUpdater.js";
 
@@ -32,17 +33,19 @@ if (!globalThis.fetch) {
 const app = express();
 export const PORT = Number(process.env.PORT) || 3000;
 export const NODE_ENV = process.env.NODE_ENV || "development";
-export const CORS_ORIGIN =
-  process.env.CORS_ORIGIN || "http://localhost:5174";
+export const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5174";
 
 // security middleware
 applySecurity(app);
 applyCommonMiddleware(app);
 
+// queryParser
+app.use(queryParser);
+
 // mongoSanitize
 mongoSecurity(app);
 
-// morgan 
+// morgan
 app.use(morganMiddleware);
 
 // Routes
