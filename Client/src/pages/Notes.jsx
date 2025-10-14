@@ -72,6 +72,7 @@ const Notes = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedNote, setSelectedNote] = useState(null);
   const [showColorPicker, setShowColorPicker] = useState(null);
+  const [deletingNoteId, setDeletingNoteId] = useState(null);
 
   useEffect(() => {
     if (noteId && notes.length > 0) {
@@ -368,9 +369,52 @@ const Notes = () => {
   };
 
   const sendToTrashNote = (id) => {
+    // Find the note to get its title before deletion
+    const noteToTrash = [...notes, ...archiveNotes].find((n) => n._id === id);
+
+    if (!noteToTrash) return;
+
+    // Set loading state
+    setDeletingNoteId(id);
+
     sendToTrashMutation.mutate(id, {
-      onSuccess: () => {
+      onSuccess: (trashedNote) => {
+        // Clear loading state
+        setDeletingNoteId(null);
+
         if (selectedNote?._id === id) setSelectedNote(null);
+
+        // Truncate title if too long (max 30 characters)
+        const truncatedTitle = noteToTrash.title.length > 30
+          ? `${noteToTrash.title.substring(0, 30)}...`
+          : noteToTrash.title;
+
+        // Show toast with undo button
+        const toastMessage = (
+          <div className="flex items-center justify-between gap-3">
+            <span>Note "{truncatedTitle}" is archived</span>
+            <button
+              onClick={() => handleUndoTrash(id)}
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium underline"
+            >
+              Undo
+            </button>
+          </div>
+        );
+
+        toast.success(toastMessage, { duration: 5000 });
+      },
+      onError: () => {
+        // Clear loading state on error
+        setDeletingNoteId(null);
+      },
+    });
+  };
+
+  const handleUndoTrash = (id) => {
+    restoreMutation.mutate(id, {
+      onSuccess: () => {
+        toast.success("Note restored successfully");
       },
     });
   };
@@ -534,6 +578,7 @@ const Notes = () => {
               setShowColorPicker={setShowColorPicker}
               colors={colors}
               getPlainTextPreview={getPlainTextPreview}
+              deletingNoteId={deletingNoteId}
             />
           )}
 

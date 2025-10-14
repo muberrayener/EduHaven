@@ -16,6 +16,7 @@ const NotesList = ({
   setShowColorPicker,
   colors,
   getPlainTextPreview,
+  deletingNoteId,
 }) => {
   const handleShareNote = async (noteId, userId, accessLevel) => {
     try {
@@ -36,8 +37,8 @@ const NotesList = ({
       if (error.response) {
         throw new Error(
           error.response.data?.error ||
-            error.response.data?.message ||
-            "Failed to share note"
+          error.response.data?.message ||
+          "Failed to share note"
         );
       } else {
         throw error;
@@ -77,6 +78,7 @@ const NotesList = ({
                 colors={colors}
                 getPlainTextPreview={getPlainTextPreview}
                 onShare={handleShareNote}
+                isDeleting={deletingNoteId === note?._id}
               />
             ))}
           </div>
@@ -115,6 +117,7 @@ const NotesList = ({
                 colors={colors}
                 getPlainTextPreview={getPlainTextPreview}
                 onShare={handleShareNote}
+                isDeleting={deletingNoteId === note?._id}
               />
             ))}
           </div>
