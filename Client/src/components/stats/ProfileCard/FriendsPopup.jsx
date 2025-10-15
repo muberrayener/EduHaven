@@ -38,60 +38,56 @@ const FriendsPopup = ({
         <span className="text-sm text-[var(--text-secondary)]">Friends</span>
       </div>
 
-      {/* Fixed Popup - popupRef moved here */}
       {showPopup && (
-        <div ref={popupRef}>
-          <PopupContainer
-            title="Friends List"
-            onClose={() => setShowPopup(false)}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm txt-dim bg-sec px-3 py-1 rounded-full">
-                {friendsList.length} friends
-              </span>
-            </div>
+        <PopupContainer
+          title="Friends List"
+          onClose={() => setShowPopup(false)}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm txt-dim bg-sec px-3 py-1 rounded-full">
+              {friendsList.length} friends
+            </span>
+          </div>
 
-            {/* Scrollable Friends List */}
-            <div className="flex-1 overflow-y-auto max-h-[28rem]">
-              {friendsList.length === 0 ? (
-                <p className="txt-dim text-center mt-10">No friends yet</p>
-              ) : (
-                friendsList.map((friend) => (
-                  <Link key={friend._id} to={`/user/${friend._id}`}>
-                    <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-sec/70 transition rounded-lg mx-2">
-                      <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
-                        {friend.ProfilePicture ? (
-                          <img
-                            src={friend.ProfilePicture}
-                            className="w-full h-full object-cover"
-                            alt={`${friend.FirstName}'s profile`}
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-sec flex items-center justify-center">
-                            <User className="w-5 h-5 txt-dim" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="txt font-medium leading-tight text-lg truncate">
-                          {friend.FirstName
-                            ? `${friend.FirstName} ${friend.LastName || ""}`
-                            : "old-user"}
-                        </p>
-                        {friend.Username && (
-                          <span className="text-sm txt-dim">
-                            @{friend.Username}
-                          </span>
-                        )}
-                      </div>
+          <div className="flex-1 overflow-y-auto max-h-[28rem]">
+            {friendsList.length === 0 ? (
+              <p className="txt-dim text-center mt-10">No friends yet</p>
+            ) : (
+              friendsList.map((friend) => (
+                <Link key={friend._id} to={`/user/${friend._id}`}>
+                  <div className="flex items-center gap-3 p-4 cursor-pointer hover:bg-sec/70 transition rounded-lg mx-2">
+                    <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden">
+                      {friend.ProfilePicture ? (
+                        <img
+                          src={friend.ProfilePicture}
+                          className="w-full h-full object-cover"
+                          alt={`${friend.FirstName}'s profile`}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-sec flex items-center justify-center">
+                          <User className="w-5 h-5 txt-dim" />
+                        </div>
+                      )}
                     </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          </PopupContainer>
-        </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="txt font-medium leading-tight text-lg truncate">
+                        {friend.FirstName
+                          ? `${friend.FirstName} ${friend.LastName || ""}`
+                          : "old-user"}
+                      </p>
+                      {friend.Username && (
+                        <span className="text-sm txt-dim">
+                          @{friend.Username}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+        </PopupContainer>
       )}
     </div>
   );

@@ -20,7 +20,6 @@ import ProfileSkeleton from "./ProfileSkeleton";
 import ConfirmRemoveFriendModal from "@/components/ConfirmRemoveFriendModal";
 
 const ProfileCard = ({ isCurrentUser = false }) => {
-  // ... keep all your state & logic here
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
@@ -41,7 +40,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
 
   const { userId } = useParams();
   const shareRef = useRef(null);
-  const popupRef = useRef(null);
+  // ❌ DELETED: const popupRef = useRef(null);
 
   const profilelink = user?._id
     ? `${window.location.origin}/user/${user._id}`
@@ -147,7 +146,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
       setKudosCount((prev) => prev + 1);
       setHasGivenKudos(true);
     } catch (error) {
-      console.error(error); // incase anything fails
+      console.error(error);
       toast.error(error.response?.data?.message || "Failed to give kudos.");
     }
   };
@@ -168,11 +167,9 @@ const ProfileCard = ({ isCurrentUser = false }) => {
   }, [showLink]);
 
   useEffect(() => {
-    // Fetch friends list + count for either current user or the profile user
     const fetchFriendsForUser = async () => {
       try {
         if (isCurrentUser) {
-          // Current (logged-in) user — keep using protected endpoints
           try {
             const listRes = await axiosInstance.get("/friends");
 
@@ -189,8 +186,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
         try {
           const listRes = await axiosInstance.get(`/friends/${userId}/stats`);
           setFriendsList(listRes.data.stats.friends || []);
-
-          // console.log(listRes.data);
         } catch (err) {
           toast.error("Error fetching profile user's friends");
           setFriendsList([]);
@@ -202,7 +197,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
       }
     };
 
-    // only fetch when we have userId or we are current user
     if (isCurrentUser || userId) {
       fetchFriendsForUser();
     }
@@ -220,8 +214,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
           response = await axiosInstance.get(`/user/details?id=${userId}`);
         }
 
-        // console.log(response);
-
         setUser(response.data);
         setKudosCount(response.data.kudosReceived || 0);
         setHasGivenKudos(response.data.hasGivenKudos || false);
@@ -235,6 +227,8 @@ const ProfileCard = ({ isCurrentUser = false }) => {
     fetchUserProfile();
   }, [isCurrentUser, userId]);
 
+  // ❌ DELETED: Entire useEffect block for popup click-outside
+  /*
   useEffect(() => {
     if (showPopup) {
       const handleClickOutside = (event) => {
@@ -249,12 +243,12 @@ const ProfileCard = ({ isCurrentUser = false }) => {
       };
     }
   }, [showPopup]);
+  */
 
   if (isLoading || !user) return <ProfileSkeleton />;
 
   return (
     <div className="bg-gradient-to-br from-indigo-500/50 to-purple-500/5 rounded-3xl shadow-md pt-6 w-full h-fit relative overflow-hidden">
-      {/* Header */}
       <ProfileHeader
         isCurrentUser={isCurrentUser}
         user={user}
@@ -266,21 +260,19 @@ const ProfileCard = ({ isCurrentUser = false }) => {
         kudosCount={kudosCount}
         friendsCount={friendsList.length}
         setShowPopup={setShowPopup}
-        popupRef={popupRef}
+        // ❌ DELETED: popupRef={popupRef}
       />
 
       <div className="mx-4">
-        {/* Friends Popup */}
         <FriendsPopup
           showPopup={showPopup}
           setShowPopup={setShowPopup}
           friendsList={friendsList}
-          popupRef={popupRef}
+          // ❌ DELETED: popupRef={popupRef}
           user={user}
           kudosCount={kudosCount}
         />
 
-        {/* User Info + Action Buttons + Details */}
         <div className="text-[var(--text-primary)]">
           <h2 className="text-xl font-bold">
             {user.FirstName} {user.LastName}
