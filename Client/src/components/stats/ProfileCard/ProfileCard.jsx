@@ -1,4 +1,3 @@
-// components/ProfileCard/ProfileCard.jsx
 import axiosInstance from "@/utils/axios";
 import { jwtDecode } from "jwt-decode";
 import { MessageCircle, ThumbsUp, UserMinus, UserPlus } from "lucide-react";
@@ -40,8 +39,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
 
   const { userId } = useParams();
   const shareRef = useRef(null);
-  // ❌ DELETED: const popupRef = useRef(null);
-
+  
   const profilelink = user?._id
     ? `${window.location.origin}/user/${user._id}`
     : "";
@@ -227,24 +225,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
     fetchUserProfile();
   }, [isCurrentUser, userId]);
 
-  // ❌ DELETED: Entire useEffect block for popup click-outside
-  /*
-  useEffect(() => {
-    if (showPopup) {
-      const handleClickOutside = (event) => {
-        if (popupRef.current && !popupRef.current.contains(event.target)) {
-          setShowPopup(false);
-        }
-      };
-
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }
-  }, [showPopup]);
-  */
-
   if (isLoading || !user) return <ProfileSkeleton />;
 
   return (
@@ -260,7 +240,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
         kudosCount={kudosCount}
         friendsCount={friendsList.length}
         setShowPopup={setShowPopup}
-        // ❌ DELETED: popupRef={popupRef}
       />
 
       <div className="mx-4">
@@ -268,7 +247,6 @@ const ProfileCard = ({ isCurrentUser = false }) => {
           showPopup={showPopup}
           setShowPopup={setShowPopup}
           friendsList={friendsList}
-          // ❌ DELETED: popupRef={popupRef}
           user={user}
           kudosCount={kudosCount}
         />
