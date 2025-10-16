@@ -115,7 +115,19 @@
   transition: background 0.2s;
 }
 .gameOverContent button:hover {
-  background: var(--bg-ter);
+  /* Use a darker, more saturated variant of the primary button color
+     so the label stays visible in both light and dark themes. */
+  background: #c99f18; /* darker/golden */
+  color: #fff;
+  /* Add a stronger shadow on hover to improve contrast on dark backgrounds */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Accessible focus styling (visible focus ring) */
+.gameOverContent button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(237, 194, 46, 0.18), 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 
 /* Mobile adjustments */
