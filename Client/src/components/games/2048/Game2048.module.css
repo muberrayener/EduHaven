@@ -115,11 +115,8 @@
   transition: background 0.2s;
 }
 .gameOverContent button:hover {
-  /* Use a darker, more saturated variant of the primary button color
-     so the label stays visible in both light and dark themes. */
-  background: #c99f18; /* darker/golden */
+  background: #c99f18;
   color: #fff;
-  /* Add a stronger shadow on hover to improve contrast on dark backgrounds */
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   transform: translateY(-1px);
 }
