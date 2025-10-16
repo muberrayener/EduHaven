@@ -16,7 +16,7 @@ import Underline from "@tiptap/extension-underline";
 
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import NoteEditor from "@/components/notes/NoteEditor.jsx";
 import NoteHeader from "@/components/notes/NoteHeader.jsx";
@@ -37,7 +37,8 @@ import {
 import "@/components/notes/note.css";
 import TrashNotes from "@/components/notes/TrashNote";
 import axiosInstance from "@/utils/axios";
-import { useToast } from "@/contexts/ToastContext";
+import { useToast } from '@/contexts/ToastContext';
+import { useNoteStore } from '@/stores/useNoteStore';
 
 const colors = [
   { name: "default", style: { backgroundColor: "var(--note-default)" } },
@@ -54,6 +55,19 @@ const Notes = () => {
   const { noteId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Zustand store
+  const {
+    status,
+    searchTerm,
+    selectedNote,
+    setSelectedNote,
+    togglePin: togglePinAction,
+    changeColor: changeColorAction,
+    sendToTrashNote: sendToTrashNoteAction,
+    archiveNote: archiveNoteAction,
+  } = useNoteStore();
+
   const isFullScreen = !!noteId;
   const { data: notes = [], isLoading } = useNotes();
   const { data: archiveNotes = [], isLoading: isArchiveLoading } =
@@ -67,27 +81,6 @@ const Notes = () => {
   const archiveNoteMutation = useArchiveNote();
   const sendToTrashMutation = useTrashNote();
   const restoreMutation = useRestoreTrashedNote();
-
-  const [status, setStatus] = useState("active"); // active, archive, trash
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedNote, setSelectedNote] = useState(null);
-  const [showColorPicker, setShowColorPicker] = useState(null);
-  const [deletingNoteId, setDeletingNoteId] = useState(null);
-
-  useEffect(() => {
-    if (noteId && notes.length > 0) {
-      const foundNote = notes.find((n) => n._id === noteId);
-      if (foundNote) {
-        setSelectedNote(foundNote);
-      }
-    }
-  }, [noteId, notes]);
-
-  const notesObj = {
-    active: notes,
-    archive: archiveNotes,
-    trash: trashNotes,
-  };
 
   const typingTimeoutRef = useRef(null);
 
@@ -228,7 +221,7 @@ const Notes = () => {
       clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = setTimeout(() => {
         updateNote(selectedNote._id, { content });
-      }, 1500); // waits 1500ms after last keystroke
+      }, 1500);
     },
     editorProps: {
       attributes: {
@@ -244,7 +237,7 @@ const Notes = () => {
       let replaced = false;
 
       doc.descendants((node, posNode) => {
-        if (replaced) return false; // stop early if already replaced
+        if (replaced) return false;
         if (node.isText && node.text && node.text.includes(placeholder)) {
           const idx = node.text.indexOf(placeholder);
           const from = posNode + idx;
@@ -330,6 +323,15 @@ const Notes = () => {
   };
 
   useEffect(() => {
+    if (noteId && notes.length > 0) {
+      const foundNote = notes.find((n) => n._id === noteId);
+      if (foundNote) {
+        setSelectedNote(foundNote);
+      }
+    }
+  }, [noteId, notes, setSelectedNote]);
+
+  useEffect(() => {
     if (editor && selectedNote) {
       const currentContent = editor.getHTML();
       if (currentContent !== selectedNote.content) {
@@ -354,9 +356,6 @@ const Notes = () => {
 
   const updateNote = (id, updates) => {
     updateNoteMutation.mutate({ id, ...updates });
-    if (selectedNote && selectedNote._id === id) {
-      setSelectedNote({ ...selectedNote, ...updates });
-    }
   };
 
   const deleteNote = (id) => {
@@ -369,54 +368,7 @@ const Notes = () => {
   };
 
   const sendToTrashNote = (id) => {
-    // Find the note to get its title before deletion
-    const noteToTrash = [...notes, ...archiveNotes].find((n) => n._id === id);
-
-    if (!noteToTrash) return;
-
-    // Set loading state
-    setDeletingNoteId(id);
-
-    sendToTrashMutation.mutate(id, {
-      onSuccess: (trashedNote) => {
-        // Clear loading state
-        setDeletingNoteId(null);
-
-        if (selectedNote?._id === id) setSelectedNote(null);
-
-        // Truncate title if too long (max 30 characters)
-        const truncatedTitle = noteToTrash.title.length > 30
-          ? `${noteToTrash.title.substring(0, 30)}...`
-          : noteToTrash.title;
-
-        // Show toast with undo button
-        const toastMessage = (
-          <div className="flex items-center justify-between gap-3">
-            <span>Note "{truncatedTitle}" is archived</span>
-            <button
-              onClick={() => handleUndoTrash(id)}
-              className="text-blue-400 hover:text-blue-300 text-sm font-medium underline"
-            >
-              Undo
-            </button>
-          </div>
-        );
-
-        toast.success(toastMessage, { duration: 5000 });
-      },
-      onError: () => {
-        // Clear loading state on error
-        setDeletingNoteId(null);
-      },
-    });
-  };
-
-  const handleUndoTrash = (id) => {
-    restoreMutation.mutate(id, {
-      onSuccess: () => {
-        toast.success("Note restored successfully");
-      },
-    });
+    sendToTrashNoteAction(sendToTrashMutation, id);
   };
 
   const restoreNote = (id) => {
@@ -426,20 +378,15 @@ const Notes = () => {
   };
 
   const togglePin = (id, pinnedAt) => {
-    updateNote(id, { pinnedAt: !pinnedAt });
+    togglePinAction(updateNoteMutation, id, pinnedAt);
   };
 
   const changeColor = (id, color) => {
-    updateNote(id, { color });
-    setShowColorPicker(null);
+    changeColorAction(updateNoteMutation, id, color);
   };
 
   const archiveNote = (note) => {
-    archiveNoteMutation.mutate(note._id, {
-      onSuccess: () => {
-        if (selectedNote?._id === note._id) setSelectedNote(null);
-      },
-    });
+    archiveNoteAction(archiveNoteMutation, note);
   };
 
   const exportNote = (note) => {
@@ -460,26 +407,23 @@ const Notes = () => {
   const insertImage = () => {
     if (!editor) return;
 
-    // Create hidden input
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
     input.multiple = true;
 
-    // Attach change event
     input.addEventListener("change", async () => {
       const files = input?.files;
       console.log(files);
       if (!files || files.length === 0) return;
 
       try {
-        await handleImageUpload(editor, files, editor.state.selection.from); // your upload function
+        await handleImageUpload(editor, files, editor.state.selection.from);
       } catch (err) {
         console.error("Image upload failed:", err);
       }
     });
 
-    // Must be triggered synchronously from user click
     input.click();
   };
 
@@ -517,6 +461,12 @@ const Notes = () => {
     return text.substring(0, 100) + (text.length > 100 ? "..." : "");
   };
 
+  const notesObj = {
+    active: notes,
+    archive: archiveNotes,
+    trash: trashNotes,
+  };
+
   const filteredNotes = notesObj[status].filter((note) => {
     const plainContent = getPlainTextPreview(note.content);
     const matchesSearch =
@@ -548,37 +498,18 @@ const Notes = () => {
       style={{ backgroundColor: "var(--bg-primary)", color: "var(--txt)" }}
     >
       <div className="flex h-screen">
-        {/* notes page (also works as sidebar} */}
         <div
           className={`${selectedNote ? "w-80" : "w-full"} overflow-auto p-4`}
         >
-          <NoteHeader
-            selectedNote={selectedNote}
-            createNewNote={createNewNote}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            setStatus={setStatus}
-            setSelectedNote={setSelectedNote}
-            status={status}
-          />
+          <NoteHeader createNewNote={createNewNote} />
 
           {(status == "active" || status == "archive") && (
             <NotesList
               pinnedNotes={pinnedNotes}
               unpinnedNotes={unpinnedNotes}
               filteredNotes={filteredNotes}
-              searchTerm={searchTerm}
-              setSelectedNote={setSelectedNote}
-              togglePin={togglePin}
-              sendToTrashNote={sendToTrashNote}
-              archiveNote={archiveNote}
-              exportNote={exportNote}
-              changeColor={changeColor}
-              showColorPicker={showColorPicker}
-              setShowColorPicker={setShowColorPicker}
-              colors={colors}
               getPlainTextPreview={getPlainTextPreview}
-              deletingNoteId={deletingNoteId}
+              exportNote={exportNote}
             />
           )}
 
@@ -592,15 +523,11 @@ const Notes = () => {
           )}
         </div>
 
-        {/* Note Editor */}
         {selectedNote && (
           <div className="flex-1 flex flex-col">
             <NoteEditor
-              selectedNote={selectedNote}
-              setSelectedNote={setSelectedNote}
               colors={colors}
               editor={editor}
-              updateNote={updateNote}
               insertLink={insertLink}
               insertImage={insertImage}
               insertTable={insertTable}
