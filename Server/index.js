@@ -71,6 +71,9 @@ async function start() {
     });
   } catch (err) {
     console.error("Failed to start server:", err);
+
+    // Run defensive graceful shutdown so the same cleanup path runs
+    // This will attempt DB cleanup (noop if not connected) then exit.
     doGracefulShutdown("startupFailure");
   }
 }
