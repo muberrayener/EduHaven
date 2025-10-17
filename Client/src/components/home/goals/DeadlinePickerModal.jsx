@@ -36,10 +36,6 @@ const DeadlinePickerModal = ({
     onClose();
   };
 
-  const handleRemoveDeadline = () => {
-    onSave(null);
-    onClose();
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -107,14 +103,7 @@ const DeadlinePickerModal = ({
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <Button
-            onClick={handleRemoveDeadline}
-            variant="secondary"
-            size="default"
-            className="flex-1 px-4 py-2 rounded-lg txt-dim hover:bg-ter"
-          >
-            Remove Deadline
-          </Button>
+          
           <Button
             onClick={handleSave}
             variant="default"
