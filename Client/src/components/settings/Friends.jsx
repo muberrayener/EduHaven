@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useFriends, useRemoveFriend } from "@/queries/friendQueries";
-import { User } from "lucide-react";
+import { User, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import ConfirmRemoveFriendModal from "../ConfirmRemoveFriendModal";
 import { Button } from "@/components/ui/button";
@@ -55,19 +55,28 @@ const Friends = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-semibold txt">Friends List</h1>
         <div className="flex items-center gap-3">
-          <input
-            type="text"
-            placeholder="🔍 Search friends"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="txt px-4 py-2"
-            style={{
-              background: "var(--bg-ter)",
-              color: "var(--txt)",
-              border: "1.5px solid var(--btn)",
-              borderRadius: "var(--radius)",
-            }}
-          />
+          <div className="relative">
+            <Search
+              className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2"
+              style={{ color: "var(--txt-dim)" }}
+            />
+            <input
+              type="text"
+              placeholder="Search friends"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="txt px-4 py-2 pl-10 w-96 bg-transparent"
+              style={{
+                color: "var(--txt)",
+                background: "transparent",
+                border: "none",
+                borderBottom: "1.5px solid var(--btn)",
+                borderRadius: 0,
+                outline: "none",
+                transition: "border-color 0.15s, box-shadow 0.15s",
+              }}
+            />
+          </div>
           <Link
             to={"/session"}
             className="txt px-4 py-2 font-semibold no-underline cursor-pointer"
