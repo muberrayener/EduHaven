@@ -6,14 +6,15 @@ import PinnedLinks from "./PinnedLinks.jsx";
 import Slogan from "./Slogan.jsx";
 import OnlineUsers from "./OnlineUsers.jsx";
 import Calculator from "./Calculator.jsx";
+import { useUserStore } from "@/stores/userStore.js";
 
 function NavBar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [, setSelectedId] = useState(""); // for AI, do not remove
-
+  const {user}=useUserStore();
+  
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) setIsLoggedIn(true);
+    if (user) setIsLoggedIn(true);
   }, []);
 
   return (

@@ -6,6 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLeaderboard } from "@/queries/timerQueries";
+import { useUserStore } from "@/stores/userStore";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -29,6 +30,7 @@ const LeaderboardItemSkeleton = () => {
 
 const Leaderboard = () => {
   const { userId } = useParams();
+  const { user } = useUserStore();
   const location = useLocation();
   const [view, setView] = useState("weekly");
   const [friendsOnly, setFriendsOnly] = useState(false);
@@ -40,18 +42,11 @@ const Leaderboard = () => {
     view,
     friendsOnly
   );
-
-  // Extract currentUserId from JWT token (keep this part)
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      setCurrentUserId(payload.id);
-    } catch (err) {
-      console.error("Invalid token", err);
+    if (user?._id) {
+      setCurrentUserId(user._id);
     }
-  }, []);
+  }, [user]);
 
   const highlightedUserId =
     location.pathname.startsWith("/user/") && userId ? userId : currentUserId;

@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axios";
 import { useToast } from "@/contexts/ToastContext";
-import { jwtDecode } from "jwt-decode";
-import { useUserProfile } from "../../contexts/UserProfileContext";
 import { Plus, X, Trash2 } from "lucide-react";
 import UpdateButton from "./UpdateButton";
 import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/stores/userStore";
 
 function EducationAndSkills() {
-  const { user, setUser, fetchUserDetails, isEduSkillsComplete } =
-    useUserProfile();
+  const { user, setUser, isEduSkillsComplete } =
+    useUserStore();
   const [profileData, setProfileData] = useState({
     University: "",
     FieldOfStudy: "",
@@ -31,15 +30,9 @@ function EducationAndSkills() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setUserId(decoded.id);
-
-        if (!user) {
-          fetchUserDetails(decoded.id);
-        } else if (!initialData) {
+        if(!user) return;
+        setUserId(user._id);
+        if (!initialData) {
           const initial = {
             University: user.University || "",
             FieldOfStudy: user.FieldOfStudy || "",
@@ -71,11 +64,7 @@ function EducationAndSkills() {
             );
           }
         }
-      } catch (error) {
-        console.error("Error decoding token:", error);
-      }
-    }
-  }, [user, fetchUserDetails]);
+      }, [user,initialData]);
 
   useEffect(() => {
     if (!initialData) return;

@@ -1,19 +1,17 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { jwtDecode } from "jwt-decode";
 import { RotateCcw } from "lucide-react";
+import { useUserStore } from "@/stores/userStore";
 
 function Slogan() {
   const [quote, setQuote] = useState("Stay hungry; stay foolish.");
   const [displayMode, setDisplayMode] = useState("greeting");
   const [firstName, setFirstName] = useState("User");
+  const {user} = useUserStore();
 
-  const getFirstNameFromJWT = () => {
-    const token = localStorage.getItem("token");
-    if (!token) return "User";
-
-    const decoded = jwtDecode(token);
-    return decoded?.FirstName || "User";
+  const getFirstNameFromStore = () => {
+    if (!user) return "User";
+    return user?.FirstName || "User";
   };
 
   const getGreeting = () => {
@@ -175,7 +173,7 @@ function Slogan() {
   };
 
   useEffect(() => {
-    setFirstName(getFirstNameFromJWT());
+    setFirstName(getFirstNameFromStore());
 
     const cachedQuote = localStorage.getItem("dailyQuote");
 

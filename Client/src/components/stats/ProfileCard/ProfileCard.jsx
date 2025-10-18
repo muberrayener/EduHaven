@@ -1,5 +1,4 @@
 import axiosInstance from "@/utils/axios";
-import { jwtDecode } from "jwt-decode";
 import { MessageCircle, ThumbsUp, UserMinus, UserPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -17,9 +16,11 @@ import ProfileDetails from "./ProfileDetails";
 import ProfileHeader from "./ProfileHeader";
 import ProfileSkeleton from "./ProfileSkeleton";
 import ConfirmRemoveFriendModal from "@/components/ConfirmRemoveFriendModal";
+import { useUserStore } from "@/stores/userStore";
 
 const ProfileCard = ({ isCurrentUser = false }) => {
   const [user, setUser] = useState(null);
+  const{user:storedUser, setUser:setStoreUser}= useUserStore();
   const [isLoading, setIsLoading] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
   const [showRemoveFriendPopup, setShowRemoveFriendPopup] = useState(false);
@@ -39,6 +40,7 @@ const ProfileCard = ({ isCurrentUser = false }) => {
 
   const { userId } = useParams();
   const shareRef = useRef(null);
+  const popupRef = useRef(null);
   
   const profilelink = user?._id
     ? `${window.location.origin}/user/${user._id}`
@@ -200,34 +202,50 @@ const ProfileCard = ({ isCurrentUser = false }) => {
     }
   }, [isCurrentUser, userId, refetchFriends]);
 
+  // Fetch user profile if not in store
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        let response;
-        let token = localStorage.getItem("token");
+        let userData;
         if (isCurrentUser) {
-          const decoded = jwtDecode(token);
-          response = await axiosInstance.get(`/user/details?id=${decoded.id}`);
+          userData = storedUser || (await fetchUserDetails());
         } else {
-          response = await axiosInstance.get(`/user/details?id=${userId}`);
+          const res = await fetchUserDetails(userId);
+          userData = res; 
         }
-
-        setUser(response.data);
-        setKudosCount(response.data.kudosReceived || 0);
-        setHasGivenKudos(response.data.hasGivenKudos || false);
-        setFriendRequestStatus(response.data.relationshipStatus);
+        console.log(userData);
+        setUser(userData);
+        setKudosCount(userData.kudosReceived || 0);
+        setHasGivenKudos(userData.hasGivenKudos || false);
+        setFriendRequestStatus(userData.relationshipStatus);
       } catch (error) {
         console.error("Error fetching user profile:", error);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchUserProfile();
-  }, [isCurrentUser, userId]);
+  }, [isCurrentUser, userId, storedUser, setStoreUser]);
+
+  useEffect(() => {
+    if (showPopup) {
+      const handleClickOutside = (event) => {
+        if (popupRef.current && !popupRef.current.contains(event.target)) {
+          setShowPopup(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [showPopup]);
 
   if (isLoading || !user) return <ProfileSkeleton />;
 
-  return (
+   return (
     <div className="bg-gradient-to-br from-indigo-500/50 to-purple-500/5 rounded-3xl shadow-md pt-6 w-full h-fit relative overflow-hidden">
       <ProfileHeader
         isCurrentUser={isCurrentUser}

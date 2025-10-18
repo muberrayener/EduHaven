@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import axiosInstance from "@/utils/axios";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,6 +15,7 @@ function SignUp() {
   const [strength, setStrength] = useState(0);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [typingTimeout, setTypingTimeout] = useState(null);
+  const hasSubmitted = useRef(false);
 
   // --- Validation Functions ---
   const validateEmail = (value) => {
@@ -129,7 +130,10 @@ function SignUp() {
 
   // --- Form Submit ---
   const onSubmit = async (data) => {
+    if (hasSubmitted.current) return;
+
     try {
+      hasSubmitted.current = true;
       const response = await axiosInstance.post(`/auth/signup`, data);
       reset();
 
@@ -145,6 +149,7 @@ function SignUp() {
         navigate("/auth/login");
       }
     } catch (error) {
+      hasSubmitted.current = false;
       const errMsg = error.response?.data?.error || error.message;
       if (errMsg.toLowerCase().includes("username")) {
         setError("Username", {
@@ -173,7 +178,7 @@ function SignUp() {
       {/* Google Login */}
       <Button
         onClick={handleGoogleLogin}
-        variant="transparent" // You can create a custom "google" variant if you prefer
+        variant="transparent"
         className="flex items-center justify-center gap-2 border border-gray-400 rounded-xl text-black dark:text-white hover:bg-white hover:dark:bg-black font-semibold p-2 text-lg w-full"
       >
         <img src="/GoogleIcon.svg" alt="Google sign-in" className="size-6" />
@@ -440,15 +445,15 @@ function SignUp() {
         <div>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || hasSubmitted.current}
             variant="default"
             className={`w-full rounded-md py-2 px-4 font-semibold ${
-              isSubmitting
+              isSubmitting || hasSubmitted.current
                 ? "opacity-50 cursor-not-allowed bg-gray-400"
                 : "bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600"
             }`}
           >
-            {isSubmitting ? "Submitting..." : "Create account"}
+            {isSubmitting || hasSubmitted.current ? "Submitting..." : "Create account"}
           </Button>
         </div>
       </form>

@@ -69,6 +69,7 @@ const updateProfile = async (req, res) => {
       updateData.OtherDetails &&
       !validateOtherDetails(updateData.OtherDetails)
     ) {
+      console.log(res);
       return sendError(
         res,
         400,
@@ -82,7 +83,10 @@ const updateProfile = async (req, res) => {
       { new: true, runValidators: true }
     ).select("-Password");
 
-    if (!updatedUser) return sendError(res, 404, "User not found");
+    if (!updatedUser) {
+      console.log(res);
+      return sendError(res, 404, "User not found");
+    }
 
     // Award Rookie Badge if applicable
     try {

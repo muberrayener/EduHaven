@@ -11,7 +11,6 @@ import Session from "./pages/Sessions.jsx";
 import StudyRoom from "./pages/SessionRoom";
 import OtpInput from "./Auth/Verifyotp.jsx";
 import Settings from "./pages/Settings";
-import { UserProfileProvider } from "@/contexts/UserProfileContext";
 import GoogleRedirect from "./Auth/GoogleRedirect";
 import ForgotPassword from "./Auth/ForgotPassword";
 import ResetPassword from "./Auth/ResetPassword";
@@ -29,14 +28,15 @@ import Login from "./Auth/Login";
 import SignUp from "./Auth/SignUp";
 import SharedNotePage from "./pages/SharedNotePage";
 import { ToastProvider } from "./contexts/ToastContext";
+import UserInitializer from "./contexts/userInitializer"
 
 function App() {
   const queryClient = new QueryClient();
 
   return (
     <ToastProvider>
-      <UserProfileProvider>
         <QueryClientProvider client={queryClient}>
+          <UserInitializer>
           <SocketProvider>
             <RouterSelector>
               <Routes>
@@ -95,8 +95,8 @@ function App() {
               theme="light"
             />
           </SocketProvider>
+          </UserInitializer>
         </QueryClientProvider>
-      </UserProfileProvider>
     </ToastProvider>
   );
 }

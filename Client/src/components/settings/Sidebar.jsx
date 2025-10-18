@@ -11,14 +11,14 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import ConfirmLogoutModal from "../ConfirmLogoutModal";
-import { useUserProfile } from "@/contexts/UserProfileContext";
 import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/stores/userStore";
 
 const Sidebar = ({ user, activeTab, setActiveTab }) => {
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const { isBasicInfoComplete, isEduSkillsComplete } = useUserProfile();
+  const { isBasicInfoComplete, isEduSkillsComplete } = useUserStore();
 
   const tabs = [
     {
