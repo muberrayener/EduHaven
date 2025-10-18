@@ -26,20 +26,67 @@ const Setgoals = ({ onGoalCreated }) => {
       toast.warning("Title is required!");
       return;
     }
+    
+    if (title.length > 100) {
+      toast.warning("Title must be less than 100 characters");
+      return;
+    }
+
     try {
       const dueDate = deadline
         ? deadline.toISOString()
         : new Date().toISOString();
 
+      const getBackendRepeatType = (frontendRepeat) => {
+        if (frontendRepeat === "Never") return "daily"; // Default as per backend
+        return frontendRepeat.toLowerCase();
+      };
+
+      const getTimePreference = (timeString) => {
+        const hour = parseInt(timeString.split(':')[0]);
+        if (hour >= 5 && hour < 12) return "morning";
+        if (hour >= 12 && hour < 17) return "afternoon";
+        if (hour >= 17 && hour < 21) return "evening";
+        return "night";
+      };
+
+      const getReminderTime = (reminderString, dueDate) => {
+        if (!reminderString) return null;
+        
+        const due = new Date(dueDate);
+        let reminderDate = new Date(due);
+        
+        if (reminderString.includes("1 day early")) {
+          reminderDate.setDate(due.getDate() - 1);
+        } else if (reminderString.includes("2 days early")) {
+          reminderDate.setDate(due.getDate() - 2);
+        } else if (reminderString.includes("3 days early")) {
+          reminderDate.setDate(due.getDate() - 3);
+        } else if (reminderString.includes("7 days early")) {
+          reminderDate.setDate(due.getDate() - 7);
+        }
+
+        if (reminderString.includes("(9:00)")) {
+          reminderDate.setHours(9, 0, 0, 0);
+        } else if (reminderString.includes("(5:00)")) {
+          reminderDate.setHours(5, 0, 0, 0);
+        } else {
+          // Default to 9:00 AM
+          reminderDate.setHours(9, 0, 0, 0);
+        }
+        
+        return reminderDate.toISOString();
+      };
+
       const taskData = {
-        title,
+        title: title.trim(),
         completed: false,
         dueDate,
         deadline: deadline ? deadline.toISOString() : null,
         repeatEnabled: repeat !== "Never",
-        repeatType: repeat.toLowerCase(),
-        reminderTime: reminder,
-        timePreference: time,
+        repeatType: getBackendRepeatType(repeat),
+        reminderTime: getReminderTime(reminder, dueDate),
+        timePreference: getTimePreference(time),
       };
 
       const { data } = await axiosInstance.post(`/todo`, taskData);
@@ -55,6 +102,11 @@ const Setgoals = ({ onGoalCreated }) => {
       }
     } catch (error) {
       console.error("Error creating goal:", error.message);
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => toast.error(err.msg));
+      } else {
+        toast.error(error.response?.data?.error || "Failed to create goal");
+      }
     }
   };
 
@@ -81,6 +133,7 @@ const Setgoals = ({ onGoalCreated }) => {
           onKeyDown={handleKeyPress}
           autoFocus
           className="w-full bg-transparent border-b border-txt-dim txt-dim py-2 px-2 focus:outline-none"
+          maxLength={100}
         />
         {title.trim() !== "" && (
           <Button
@@ -121,7 +174,7 @@ const Setgoals = ({ onGoalCreated }) => {
                   value={repeat}
                   onChange={(e) => setRepeat(e.target.value)}
                 >
-                  {["Never", "Daily", "Weekly", "Monthly", "Yearly"].map(
+                  {["Never", "Daily", "Weekly", "Monthly"].map(
                     (r) => (
                       <option key={r} value={r} className="txt bg-sec">
                         {r}
@@ -131,7 +184,6 @@ const Setgoals = ({ onGoalCreated }) => {
                 </select>
               </div>
 
-              {/* Updated Time Input */}
               <div className="mb-4 [@container(max-width:420px)]:flex gap-16 items-center">
                 <label
                   htmlFor="time-input"

@@ -3,6 +3,7 @@ import { X, Calendar as CalendarIcon, Clock } from "lucide-react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/contexts/ToastContext";
 
 const DeadlinePickerModal = ({
   isOpen,
@@ -15,23 +16,26 @@ const DeadlinePickerModal = ({
     currentDeadline ? new Date(currentDeadline) : new Date()
   );
   const [selectedTime, setSelectedTime] = useState("21:00");
+  const { toast } = useToast();
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    // Combine date and time
+    // Validate future date
+    const now = new Date();
     const deadline = new Date(selectedDate);
     const [hours, minutes] = selectedTime.split(":");
     deadline.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+    if (deadline <= now) {
+      toast.warning("Please select a future date and time");
+      return;
+    }
 
     onSave(deadline);
     onClose();
   };
 
-  const handleRemoveDeadline = () => {
-    onSave(null);
-    onClose();
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -66,6 +70,7 @@ const DeadlinePickerModal = ({
             next2Label={null}
             prev2Label={null}
             className="bg-ter rounded-lg"
+            minDate={new Date()}
           />
         </div>
 
@@ -98,14 +103,7 @@ const DeadlinePickerModal = ({
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <Button
-            onClick={handleRemoveDeadline}
-            variant="secondary"
-            size="default"
-            className="flex-1 px-4 py-2 rounded-lg txt-dim hover:bg-ter"
-          >
-            Remove Deadline
-          </Button>
+          
           <Button
             onClick={handleSave}
             variant="default"
