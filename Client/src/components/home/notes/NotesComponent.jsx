@@ -220,7 +220,7 @@ function NotesComponent() {
         const truncatedTitle = truncateTitle(note.title);
         toast.success(`Note "${truncatedTitle}" is archived`);
         setArchivingNoteId(null);
-        
+
         // Refresh notes after archiving
         if (currentPage >= notes.length - 1 && currentPage > 0) {
           setCurrentPage((prev) => prev - 1);

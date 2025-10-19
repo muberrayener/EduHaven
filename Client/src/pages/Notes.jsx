@@ -36,8 +36,8 @@ import {
 import "@/components/notes/note.css";
 import TrashNotes from "@/components/notes/TrashNote";
 import axiosInstance from "@/utils/axios";
-import { useToast } from '@/contexts/ToastContext';
-import { useNoteStore } from '@/stores/useNoteStore';
+import { useToast } from "@/contexts/ToastContext";
+import { useNoteStore } from "@/stores/useNoteStore";
 
 const colors = [
   { name: "default", style: { backgroundColor: "var(--note-default)" } },
@@ -54,14 +54,9 @@ const Notes = () => {
   const { noteId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   // Zustand store
-  const {
-    status,
-    searchTerm,
-    selectedNote,
-    setSelectedNote,
-  } = useNoteStore();
+  const { status, searchTerm, selectedNote, setSelectedNote } = useNoteStore();
   const { data: notes = [], isLoading } = useNotes();
   const { data: archiveNotes = [], isLoading: isArchiveLoading } =
     useArchivedNotes();

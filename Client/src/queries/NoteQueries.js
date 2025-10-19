@@ -10,7 +10,7 @@ import {
   trashNote,
   updateNote,
   removeCollaborator,
-  generateShareLink
+  generateShareLink,
 } from "@/api/NoteApi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -105,7 +105,7 @@ export const useArchiveNote = () => {
       // Invalidate and refetch both queries to ensure data consistency
       queryClient.invalidateQueries({ queryKey: ["notes"] });
       queryClient.invalidateQueries({ queryKey: ["archivedNotes"] });
-      
+
       // Also update the individual note cache
       queryClient.setQueryData(["notes", updatedNote._id], updatedNote);
     },
@@ -166,6 +166,8 @@ export const useGenerateShareLink = () =>
     },
     onError: (error) => {
       console.error("Error generating share link:", error);
-      toast.error(error.response?.data?.message || "Failed to generate share link");
-    }
+      toast.error(
+        error.response?.data?.message || "Failed to generate share link"
+      );
+    },
   });

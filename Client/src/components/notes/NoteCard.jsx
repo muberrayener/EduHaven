@@ -72,8 +72,10 @@ const NoteCard = ({
   const canEdit = isOwner || hasEditAccess;
 
   // Use props if provided, otherwise use store
-  const actualShowColorPicker = showColorPicker !== undefined ? showColorPicker : storeShowColorPicker;
-  const actualSetShowColorPicker = setShowColorPicker || storeSetShowColorPicker;
+  const actualShowColorPicker =
+    showColorPicker !== undefined ? showColorPicker : storeShowColorPicker;
+  const actualSetShowColorPicker =
+    setShowColorPicker || storeSetShowColorPicker;
 
   // Create handlers that combine prop callbacks with store actions
   const handleTogglePin = (id, pinnedAt) => {
@@ -164,8 +166,8 @@ const NoteCard = ({
       if (error.response) {
         throw new Error(
           error.response.data?.error ||
-          error.response.data?.message ||
-          "Failed to share note"
+            error.response.data?.message ||
+            "Failed to share note"
         );
       } else {
         throw error;
@@ -191,8 +193,9 @@ const NoteCard = ({
         }}
         className={`absolute top-2 right-2 p-1 rounded-full bg-black/10 hover:bg-black/20 transition-opacity
 
-        ${note?.pinnedAt ? "opacity-100" : hovered ? "opacity-100" : "opacity-0"
-          }`}
+        ${
+          note?.pinnedAt ? "opacity-100" : hovered ? "opacity-100" : "opacity-0"
+        }`}
         disabled={!canEdit}
       >
         <Pin
@@ -262,7 +265,9 @@ const NoteCard = ({
           </Button>
 
           <Button
-            onClick={() => onExport ? onExport(note) : console.log('Export note:', note)}
+            onClick={() =>
+              onExport ? onExport(note) : console.log("Export note:", note)
+            }
             variant="transparent"
             size="icon"
             className="p-1 rounded hover:bg-[var(--bg-secondary)]"
