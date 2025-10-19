@@ -1,6 +1,4 @@
 import { useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
-import { useUserProfile } from "@/contexts/UserProfileContext";
 import Sidebar from "@/components/settings/Sidebar";
 import BasicInfo from "@/components/settings/BasicInfo";
 import Account from "@/components/settings/Account";
@@ -10,22 +8,11 @@ import EducationAndSkills from "@/components/settings/EducationAndSkills";
 import TimeLanguage from "@/components/settings/TimeLanguage";
 import NotLogedInPage from "@/components/NotLogedInPage";
 import { useSearchParams } from "react-router-dom";
+import { useUserStore } from "@/stores/userStore";
 
 const Settings = () => {
-  const { user, fetchUserDetails } = useUserProfile();
+  const {user} = useUserStore();
   const [searchParams, setSearchParams] = useSearchParams();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        fetchUserDetails(decoded.id);
-      } catch (error) {
-        console.error("Error decoding token:", error);
-      }
-    }
-  }, [fetchUserDetails]);
 
   const validTabs = [
     "basic-info",

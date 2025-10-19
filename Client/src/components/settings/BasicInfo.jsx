@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import axiosInstance from "@/utils/axios";
-import { jwtDecode } from "jwt-decode";
-import { useUserProfile } from "../../contexts/UserProfileContext";
 import { useToast } from "../../contexts/ToastContext";
 import { Camera, User, Trash2 } from "lucide-react";
 import UpdateButton from "./UpdateButton";
 import { CropModal } from "../CropModal";
-import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/stores/userStore";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,11 +12,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
-
+import { Button } from "../ui/button";
 
 export default function BasicInfo() {
-  const { user, setUser, fetchUserDetails, isBasicInfoComplete } =
-    useUserProfile();
+  const { user, setUser, isBasicInfoComplete } =
+    useUserStore();
+   const { toast } = useToast();
   const [profileData, setProfileData] = useState({
     Username: "",
     FirstName: "",
@@ -38,35 +37,23 @@ export default function BasicInfo() {
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
 
-  const { toast } = useToast();
-
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setUserId(decoded.id);
-
-        if (!user) {
-          fetchUserDetails(decoded.id);
-        } else if (!initialProfileData) {
-          const userData = {
-            Username: user.Username || "",
-            FirstName: user.FirstName || "",
-            LastName: user.LastName || "",
-            ProfilePicture: user.ProfilePicture || null,
-            Bio: user.Bio || "",
-            Country: user.Country || "",
-            Gender: user.Gender || "",
-          };
-          setProfileData(userData);
-          setInitialProfileData(userData);
-        }
-      } catch (error) {
-        console.error("Error decoding token:", error);
-      }
+    if (!user) return; // no user
+    setUserId(user._id);
+    if (!initialProfileData) {
+      const userData = {
+        Username: user.Username || "",
+        FirstName: user.FirstName || "",
+        LastName: user.LastName || "",
+        ProfilePicture: user.ProfilePicture || null,
+        Bio: user.Bio || "",
+        Country: user.Country || "",
+        Gender: user.Gender || "",
+      };
+      setProfileData(userData);
+      setInitialProfileData(userData);
     }
-  }, [user, fetchUserDetails, initialProfileData]);
+  }, [user, initialProfileData]);
 
   useEffect(() => {
     if (!initialProfileData) return;
@@ -186,7 +173,7 @@ export default function BasicInfo() {
     }
   };
 
-  return (
+   return (
     <div className="max-w-4xl mx-auto ">
       <CropModal
         isOpen={showCropModal}

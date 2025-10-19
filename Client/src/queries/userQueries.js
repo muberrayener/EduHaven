@@ -9,3 +9,4 @@ export const useAllUsers = () =>
     staleTime: 1000 * 60 * 5, // cache for 5 minutes
     onError: (err) => handleApiError(err, "Error fetching all users"),
   });
+

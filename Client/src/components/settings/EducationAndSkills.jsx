@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "@/utils/axios";
 import { useToast } from "@/contexts/ToastContext";
-import { jwtDecode } from "jwt-decode";
-import { useUserProfile } from "../../contexts/UserProfileContext";
 import { Plus, X, Trash2 } from "lucide-react";
 import UpdateButton from "./UpdateButton";
 import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/stores/userStore";
 
 function EducationAndSkills() {
-  const { user, setUser, fetchUserDetails, isEduSkillsComplete } =
-    useUserProfile();
+  const { user, setUser, isEduSkillsComplete } =
+    useUserStore();
   const [profileData, setProfileData] = useState({
     University: "",
     FieldOfStudy: "",
@@ -31,15 +30,9 @@ function EducationAndSkills() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setUserId(decoded.id);
-
-        if (!user) {
-          fetchUserDetails(decoded.id);
-        } else if (!initialData) {
+        if(!user) return;
+        setUserId(user._id);
+        if (!initialData) {
           const initial = {
             University: user.University || "",
             FieldOfStudy: user.FieldOfStudy || "",
@@ -71,11 +64,7 @@ function EducationAndSkills() {
             );
           }
         }
-      } catch (error) {
-        console.error("Error decoding token:", error);
-      }
-    }
-  }, [user, fetchUserDetails]);
+      }, [user,initialData]);
 
   useEffect(() => {
     if (!initialData) return;
@@ -312,8 +301,8 @@ function EducationAndSkills() {
         </div>
 
         {/* Skills Section */}
-        <div className="px-6 py-2">
-          <div className="space-y-4">
+        <div className="px-6">
+          <div className={`space-y-2`}>
             <div className="flex items-center justify-between">
               <label
                 htmlFor="skills"
@@ -326,7 +315,7 @@ function EducationAndSkills() {
                   type="button"
                   onClick={() => handleClearOtherDetails("skills")}
                   variant="transparent"
-                  className="text-[var(--txt-dim)] hover:text-red-500 flex items-center gap-1 text-sm"
+                  className="text-[var(--txt-dim)] hover:text-red-500 items-center flex gap-1 text-sm"
                   disabled={isLoading}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -335,28 +324,8 @@ function EducationAndSkills() {
               )}
             </div>
 
-            <div className="flex gap-2 flex-wrap">
-              {skillsList.map((skill, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-2 bg-[var(--bg-sec)] px-3 py-2 rounded-lg"
-                >
-                  <span className="text-[var(--txt)] text-sm">{skill}</span>
-                  <Button
-                    type="button"
-                    onClick={() => removeSkill(skill)}
-                    variant="transparent"
-                    size="icon"
-                    className="text-[var(--txt-dim)] hover:text-red-500 p-1"
-                    disabled={isLoading}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex gap-2">
+            <div className="space-y-4">
+              <div className="flex gap-2">
               <input
                 id="skills"
                 type="text"
@@ -383,12 +352,35 @@ function EducationAndSkills() {
                 Add
               </Button>
             </div>
+
+            <div className="flex gap-2 flex-wrap">
+              {skillsList.map((skill, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 bg-[var(--bg-sec)] px-3 py-2 rounded-lg"
+                >
+                  <span className="text-[var(--txt)] text-sm">{skill}</span>
+                  <Button
+                    type="button"
+                    onClick={() => removeSkill(skill)}
+                    variant="transparent"
+                    size="icon"
+                    className="text-[var(--txt-dim)] hover:text-red-500 p-1"
+                    disabled={isLoading}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div> 
+            </div>
+
           </div>
         </div>
 
         {/* Interests Section */}
-        <div className="px-6 py-2">
-          <div className="space-y-4">
+        <div className="px-6">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label
                 htmlFor="interests"
@@ -410,28 +402,8 @@ function EducationAndSkills() {
               )}
             </div>
 
-            <div className="flex gap-2 flex-wrap">
-              {interestsList.map((interest, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-2 bg-[var(--bg-sec)] px-3 py-2 rounded-lg"
-                >
-                  <span className="text-[var(--txt)] text-sm">{interest}</span>
-                  <Button
-                    type="button"
-                    onClick={() => removeInterest(interest)}
-                    variant="transparent"
-                    size="icon"
-                    className="text-[var(--txt-dim)] hover:text-red-500 p-1"
-                    disabled={isLoading}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex gap-2">
+            <div className="space-y-4">
+              <div className="flex gap-2">
               <input
                 id="interests"
                 type="text"
@@ -458,6 +430,30 @@ function EducationAndSkills() {
                 Add
               </Button>
             </div>
+
+            <div className="flex gap-2 flex-wrap">
+              {interestsList.map((interest, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-2 bg-[var(--bg-sec)] px-3 py-2 rounded-lg"
+                >
+                  <span className="text-[var(--txt)] text-sm">{interest}</span>
+                  <Button
+                    type="button"
+                    onClick={() => removeInterest(interest)}
+                    variant="transparent"
+                    size="icon"
+                    className="text-[var(--txt-dim)] hover:text-red-500 p-1"
+                    disabled={isLoading}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            
+            </div>
+
           </div>
         </div>
 

@@ -13,14 +13,16 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import NotificationIndicator from "./NotificationIndicator";
+import { useUserStore } from "@/stores/userStore";
 
 function Sidebar() {
-  const token = localStorage.getItem("token");
+  const {user}=useUserStore();
   const location = useLocation();
   const isHome = location.pathname === "/";
   const sidebarRef = useRef(null);
   const linkRefs = useRef({});
   const [indicatorPos, setIndicatorPos] = useState({ top: 0 });
+
 
   useEffect(() => {
     if (location.pathname === "/") return;
@@ -137,7 +139,7 @@ function Sidebar() {
       </div>
 
       <div className="space-y-2 w-full">
-        {!token && (
+        {!user && (
           <SidebarLink
             to="/auth/login"
             IconComponent={LogIn}

@@ -4,10 +4,11 @@ import OnlineFriends from "../components/session/friendsSection/OnlineFriends.js
 import YourRooms from "@/components/session/YourRooms.jsx";
 import NotLogedInPage from "@/components/NotLogedInPage.jsx";
 import axiosInstance from "@/utils/axios";
+import { useUserStore } from "@/stores/userStore.js";
 
 function Session() {
   const [view, setView] = useState("suggested");
-  const token = localStorage.getItem("token");
+  const {user}=useUserStore();
   const [myRooms, setMyRooms] = useState([]);
   const [otherRooms, setOtherRooms] = useState([]);
 
@@ -23,9 +24,9 @@ function Session() {
     };
 
     fetchRooms();
-  }, [token]);
+  }, [user]);
 
-  if (!token) return <NotLogedInPage />;
+  if (!user) return <NotLogedInPage />;
 
   return (
     <div className="h-[100vh] w-[calc(100vw-70px)] pb-0 flex ">

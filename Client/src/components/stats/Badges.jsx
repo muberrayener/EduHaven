@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import { Award, Info } from "lucide-react";
-import { jwtDecode } from "jwt-decode";
 import axiosInstance from "@/utils/axios";
 import { getAllBadges } from "@/utils/badgeSystem";
-import { useUserProfile } from "@/contexts/UserProfileContext";
+import { useUserStore } from "@/stores/userStore";
 import BadgeModal from "./BadgeModal";
 import BadgeTooltip from "./BadgeTooltip";
 import { Button } from "@/components/ui/button";
@@ -13,25 +12,13 @@ const Badges = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userId, setUserId] = useState(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const { user, fetchUserDetails } = useUserProfile();
+  const { user } = useUserStore();
 
-  // Get user ID from token
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setUserId(decoded.id);
-
-        // Fetch user details if not already loaded
-        if (!user) {
-          fetchUserDetails(decoded.id);
-        }
-      } catch (error) {
-        console.error("Error decoding token:", error);
-      }
+    if (user?._id) {
+      setUserId(user._id);
     }
-  }, [user, fetchUserDetails]);
+  }, [user]);
 
   useEffect(() => {
     const fetchBadgesFromServer = async () => {

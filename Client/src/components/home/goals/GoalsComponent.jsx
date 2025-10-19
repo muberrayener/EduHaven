@@ -101,18 +101,21 @@ const GoalsComponent = () => {
             " deleted.
           </span>
           <div className="flex items-center ml-4">
-            <button
+            <Button
               onClick={() => handleUndoDelete(undoAction, toastId)}
+              variant="transparent"
               className="text-blue-400 hover:text-blue-300 mr-2 text-sm font-medium"
             >
               Undo
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => toast.dismiss(toastId)}
-              className="text-gray-400 hover:text-gray-300"
+              variant="transparent"
+              size="icon"
+              className="text-gray-400 hover:text-gray-300 p-1"
             >
               <X size={16} />
-            </button>
+            </Button>
           </div>
         </div>,
         {
@@ -126,17 +129,28 @@ const GoalsComponent = () => {
         }
       );
     } catch (error) {
-      console.error("Error deleting todo:", error.message);
-
+      console.error("Error deleting todo:", error);
       setTodos(previousTodos);
-      toast.error("Failed to delete goal");
+
+      // Handle specific error cases
+      if (error.response?.status === 404) {
+        toast.error("Goal already deleted");
+      } else if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => toast.error(err.msg));
+      } else {
+        toast.error(error.response?.data?.error || "Failed to delete goal");
+      }
     }
   };
 
   const handleUndoDelete = async (undoAction, toastId) => {
     try {
-      // Recreate the todo on the server
-      const { data } = await axiosInstance.post(`/todo`, undoAction.todo);
+      const fixedTodo = {
+        ...undoAction.todo,
+        reminderTime: undoAction.todo.reminderTime ? new Date(undoAction.todo.reminderTime).toISOString() : null,
+      };
+
+      const { data } = await axiosInstance.post(`/todo`, fixedTodo);
 
       setTodos((prev) => [
         data.data,
@@ -144,13 +158,17 @@ const GoalsComponent = () => {
       ]);
 
       toast.dismiss(toastId);
-
       toast.success("Goal restored successfully!");
     } catch (error) {
-      console.error("Error undoing delete:", error.message);
+      console.error("Error undoing delete:", error);
       // If undo fails, revert to previous state
       setTodos(undoAction.previousTodos);
-      toast.error("Failed to restore goal");
+
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => toast.error(err.msg));
+      } else {
+        toast.error(error.response?.data?.error || "Failed to restore goal");
+      }
     }
   };
 
@@ -167,10 +185,10 @@ const GoalsComponent = () => {
       prev.map((todo) =>
         todo._id === id
           ? {
-              ...todo,
-              completed: !todo.completed,
-              status: todo.completed ? "open" : "closed",
-            }
+            ...todo,
+            completed: !todo.completed,
+            status: todo.completed ? "open" : "closed",
+          }
           : todo
       )
     );
@@ -180,11 +198,17 @@ const GoalsComponent = () => {
         ...todo,
         completed: !todo.completed,
         status: !todo.completed ? "closed" : "open",
+        reminderTime: todo.reminderTime ? new Date(todo.reminderTime).toISOString() : null,
       };
       await axiosInstance.put(`/todo/${id}`, updatedTodo);
     } catch (error) {
-      console.error("Error toggling todo:", error.message);
+      console.error("Error toggling todo:", error);
       setTodos(previousTodos);
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => toast.error(err.msg));
+      } else {
+        toast.error(error.response?.data?.error || "Failed to update goal");
+      }
     }
   };
 
@@ -204,10 +228,14 @@ const GoalsComponent = () => {
     );
 
     try {
-      const updatedTodo = { ...todo, repeatEnabled: !todo.repeatEnabled };
+      const updatedTodo = {
+        ...todo,
+        repeatEnabled: !todo.repeatEnabled,
+        reminderTime: todo.reminderTime ? new Date(todo.reminderTime).toISOString() : null,
+      };
       await axiosInstance.put(`/todo/${id}`, updatedTodo);
     } catch (error) {
-      console.error("Error toggling repeat:", error.message);
+      console.error("Error toggling repeat:", error);
       setTodos(previousTodos);
     }
   };
@@ -215,6 +243,11 @@ const GoalsComponent = () => {
   const handleSave = async () => {
     if (!editedTitle.trim()) {
       toast.warning("Title cannot be empty!");
+      return;
+    }
+
+    if (editedTitle.length > 100) {
+      toast.warning("Title must be less than 100 characters");
       return;
     }
 
@@ -227,7 +260,7 @@ const GoalsComponent = () => {
     const previousTodos = [...todos];
     setTodos((prev) =>
       prev.map((todo) =>
-        todo._id === editingId ? { ...todo, title: editedTitle } : todo
+        todo._id === editingId ? { ...todo, title: editedTitle.trim() } : todo
       )
     );
     setEditingId(null);
@@ -236,11 +269,17 @@ const GoalsComponent = () => {
     try {
       await axiosInstance.put(`/todo/${editingId}`, {
         ...todo,
-        title: editedTitle,
+        title: editedTitle.trim(),
+        reminderTime: todo.reminderTime ? new Date(todo.reminderTime).toISOString() : null,
       });
     } catch (error) {
-      console.error("Error updating todo:", error.message);
+      console.error("Error updating todo:", error);
       setTodos(previousTodos);
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => toast.error(err.msg));
+      } else {
+        toast.error(error.response?.data?.error || "Failed to update goal");
+      }
     }
   };
 
@@ -269,8 +308,15 @@ const GoalsComponent = () => {
 
   const handleDeadlineSave = async (deadline) => {
     try {
+      const todo = todos.find((t) => t._id === deadlineModal.todoId);
+      if (!todo) {
+        console.error("Todo not found for deadline update");
+        return;
+      }
+
       const updatedTodo = {
         deadline: deadline ? deadline.toISOString() : null,
+        reminderTime: todo.reminderTime ? new Date(todo.reminderTime).toISOString() : null,
       };
       await axiosInstance.put(`/todo/${deadlineModal.todoId}`, updatedTodo);
 
@@ -282,7 +328,12 @@ const GoalsComponent = () => {
         )
       );
     } catch (error) {
-      console.error("Error updating deadline:", error.message);
+      console.error("Error updating deadline:", error);
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => toast.error(err.msg));
+      } else {
+        toast.error(error.response?.data?.error || "Failed to update deadline");
+      }
     }
   };
 
@@ -387,9 +438,8 @@ const GoalsComponent = () => {
       ) : (
         <div className="flex-grow">
           <span
-            className={`text-lg ${
-              todo.completed ? "line-through txt-dim" : "txt-dim"
-            }`}
+            className={`text-lg ${todo.completed ? "line-through txt-dim" : "txt-dim"
+              }`}
           >
             {todo.title}
           </span>
@@ -434,11 +484,10 @@ const GoalsComponent = () => {
               onClick={() => handleToggleRepeat(todo._id)}
               variant="transparent"
               size="icon"
-              className={`p-1 rounded transition-colors ${
-                todo.repeatEnabled
+              className={`p-1 rounded transition-colors ${todo.repeatEnabled
                   ? "text-blue-500 bg-blue-100/10"
                   : "txt-dim hover:text-blue-500"
-              }`}
+                }`}
               title={todo.repeatEnabled ? "Disable repeat" : "Enable repeat"}
             >
               <Repeat className="h-4 w-4" />

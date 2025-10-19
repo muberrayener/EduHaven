@@ -2,10 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import axiosInstance from "@/utils/axios";
 import { useToast } from "@/contexts/ToastContext";
+import { useUserStore } from "@/stores/userStore";
 
 const Signout = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const {clearUser}=useUserStore();
 
   useEffect(() => {
     const handleSignOut = async () => {
@@ -14,8 +16,8 @@ const Signout = () => {
 
         localStorage.removeItem("token");
         localStorage.removeItem("activationToken");
+        clearUser();
         navigate("/", { replace: true });
-        window.location.reload();
       } catch (error) {
         console.error("Logout failed:", error);
         toast.error("Logout failed. Please try again.");

@@ -52,6 +52,7 @@ function NotesComponent() {
   const [direction, setDirection] = useState(0);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [archivingNoteId, setArchivingNoteId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const { toast } = useToast();
   const archiveNoteMutation = useArchiveNote();
@@ -67,6 +68,7 @@ function NotesComponent() {
 
   const fetchNotes = async () => {
     try {
+      setIsLoading(true);
       const response = await axiosInstance.get(`/note`);
       if (response.data.success) {
         if (!response.data.data || response.data.data.length === 0) {
@@ -80,6 +82,8 @@ function NotesComponent() {
       }
     } catch (err) {
       setError(err?.response?.data?.error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -335,6 +339,7 @@ function NotesComponent() {
             contentTimeoutRef={contentTimeoutRef}
             handleSync={handleSync}
             validateFields={validateFields}
+            isLoading={isLoading}
           />
 
           <BottomControls
