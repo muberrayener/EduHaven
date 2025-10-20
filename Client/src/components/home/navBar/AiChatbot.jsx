@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import ReactDOM from "react-dom";
 import {
   BotMessageSquare,
@@ -18,6 +18,12 @@ import {
   Clock,
   TrendingUp,
   Send,
+  Copy,
+  Check,
+  Edit2,
+  AlertCircle,
+  WifiOff,
+  Square,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -46,6 +52,341 @@ const messageVariants = {
   }),
 };
 
+const formatBoldText = (text) => {
+  return text.replace(/\*\*(.*?)\*\*/g, '<span class="message-bold">$1</span>')
+  .replace(/\*(.*?)\*/g, '<em class="message-italic">$1</em>');
+};
+
+// Interactive Guided Experience System
+const GUIDED_EXPERIENCES = {
+  "study planning": {
+    steps: [
+      {
+        id: 1,
+        question: "What subject do you need help with?",
+        options: ["Mathematics", "Science", "Languages", "History", "Computer Science", "Other"],
+        type: "subject"
+      },
+      {
+        id: 2,
+        question: "What's your timeline?",
+        options: ["Urgent (this week)", "Short-term (2-4 weeks)", "Long-term (1-3 months)", "Ongoing learning"],
+        type: "timeline"
+      },
+      {
+        id: 3,
+        question: "What's your preferred learning style?",
+        options: ["Visual learner", "Auditory learner", "Hands-on practice", "Reading/writing", "Mixed approach"],
+        type: "style"
+      },
+      {
+        id: 4,
+        question: "What specific goal do you have?",
+        options: ["Exam preparation", "Skill mastery", "Project completion", "General understanding", "Career advancement"],
+        type: "goal"
+      }
+    ],
+    finalResponse: (answers) => `🎯 **Your Personalized Study Plan**
+
+Based on your preferences, here's your customized learning path:
+
+**Subject Focus:** ${answers.subject}
+**Timeline:** ${answers.timeline}
+**Learning Style:** ${answers.style}
+**Primary Goal:** ${answers.goal}
+
+**Recommended Actions:**
+1. **Session Type:** ${answers.timeline === 'Urgent (this week)' ? 'Intensive 1-on-1 tutoring' : 'Group study sessions'}
+2. **Study Materials:** ${answers.style === 'Visual learner' ? 'Visual notes and diagrams' : 'Comprehensive text resources'}
+3. **Practice Approach:** ${answers.goal === 'Exam preparation' ? 'Mock tests and quizzes' : 'Project-based learning'}
+4. **Schedule:** ${answers.timeline === 'Long-term (1-3 months)' ? 'Weekly 2-hour sessions' : 'Daily 1-hour sessions'}
+
+**Next Steps:**
+• Book your first session now
+• Set up your study materials
+• Connect with peers studying ${answers.subject}
+• Track your progress weekly
+
+*Ready to start your learning journey? I can help you book your first session!*`
+  },
+  "session booking": {
+    steps: [
+      {
+        id: 1,
+        question: "What type of session are you looking for?",
+        options: ["Group Study", "1-on-1 Tutoring", "Exam Prep", "Topic Deep Dive", "Project Help"],
+        type: "sessionType"
+      },
+      {
+        id: 2,
+        question: "Preferred time of day?",
+        options: ["Morning (8AM-12PM)", "Afternoon (12PM-5PM)", "Evening (5PM-9PM)", "Weekend"],
+        type: "timePreference"
+      },
+      {
+        id: 3,
+        question: "Session duration?",
+        options: ["30 minutes", "1 hour", "1.5 hours", "2 hours"],
+        type: "duration"
+      },
+      {
+        id: 4,
+        question: "Do you need any specific tools?",
+        options: ["Whiteboard", "Screen sharing", "Recording", "File sharing", "All basic tools"],
+        type: "tools"
+      }
+    ],
+    finalResponse: (answers) => `📅 **Session Booking Summary**
+
+Perfect! Here's your session setup:
+
+**Session Type:** ${answers.sessionType}
+**Preferred Time:** ${answers.timePreference}
+**Duration:** ${answers.duration}
+**Tools:** ${answers.tools}
+
+**Available Sessions Matching Your Preferences:**
+• **Tomorrow ${answers.timePreference}** - ${answers.sessionType} on your chosen topic
+• **This Weekend** - Group study with peers
+• **Flexible Slots** - Multiple ${answers.duration} sessions available
+
+**Session Features Included:**
+✅ Real-time collaboration
+✅ ${answers.tools} access
+✅ Progress tracking
+✅ Session recording
+✅ Expert support
+
+**Ready to confirm your booking?** 
+*Click "Book Now" to secure your spot, or ask me about specific topics!*`
+  },
+  "note taking": {
+    steps: [
+      {
+        id: 1,
+        question: "What will you be taking notes for?",
+        options: ["Lecture/Class", "Book/Reading", "Research", "Meeting", "Personal Study", "Project"],
+        type: "purpose"
+      },
+      {
+        id: 2,
+        question: "Preferred note format?",
+        options: ["Text Notes", "Audio Notes", "Visual Notes", "Flashcards", "Mixed Format"],
+        type: "format"
+      },
+      {
+        id: 3,
+        question: "How organized do you want your notes?",
+        options: ["Simple & Quick", "Moderately Organized", "Highly Structured", "Academic Standard"],
+        type: "organization"
+      },
+      {
+        id: 4,
+        question: "Do you need AI assistance?",
+        options: ["Auto-summarization", "Key points extraction", "Mind maps", "Study questions", "All features"],
+        type: "aiFeatures"
+      }
+    ],
+    finalResponse: (answers) => `📝 **Your Smart Note-Taking Setup**
+
+Excellent choice! Here's your customized note-taking system:
+
+**Purpose:** ${answers.purpose}
+**Format:** ${answers.format}
+**Organization Level:** ${answers.organization}
+**AI Features:** ${answers.aiFeatures}
+
+**Recommended Setup:**
+1. **Template:** ${answers.organization === 'Highly Structured' ? 'Cornell Note System' : 'Bullet-point format'}
+2. **Tools:** ${answers.format === 'Visual Notes' ? 'Diagram creator + text editor' : 'Advanced text editor with audio sync'}
+3. **AI Assistance:** ${answers.aiFeatures} enabled
+4. **Organization:** ${answers.organization === 'Simple & Quick' ? 'Tag-based system' : 'Folder hierarchy with tags'}
+
+**Pro Features Activated:**
+• Smart search across all notes
+• Cross-reference similar content
+• Automatic backup to cloud
+• Mobile sync available
+• Export to multiple formats
+
+**Getting Started:**
+1. Create your first note template
+2. Set up your organization system
+3. Enable AI features
+4. Start capturing knowledge!
+
+*Would you like me to create your first note template now?*`
+  }
+};
+
+// Hardcoded responses for specific queries
+const HARDCODED_RESPONSES = {
+  "show me study sessions": `🎯 **Study Sessions at EduHaven**
+
+We offer various types of study sessions to suit your learning style:
+
+• **Group Study Sessions** - Collaborate with peers (2-5 people)
+• **1-on-1 Tutoring** - Personalized attention from expert tutors
+• **Exam Prep Sessions** - Focused preparation for upcoming tests
+• **Topic Deep Dives** - Master specific subjects in detail
+
+**Features:**
+✅ Real-time whiteboard collaboration
+✅ Screen sharing capabilities  
+✅ Session recording and playback
+✅ Progress tracking and analytics
+
+*What specific type of session are you interested in? I can help you find the perfect fit!*`,
+
+  "how do i join learning games": `🎮 **Join Learning Games**
+
+Getting started with our educational games is easy! Here's how:
+
+**Step-by-Step Guide:**
+1. **Browse Games** - Explore our game library by subject and difficulty
+2. **Choose Your Game** - Select from quizzes, puzzles, or interactive challenges
+3. **Invite Friends** (Optional) - Play solo or with study buddies
+4. **Track Progress** - Earn points and unlock achievements
+
+**Popular Game Categories:**
+• 🧠 Brain Teasers & Puzzles
+• 📚 Subject-Specific Challenges  
+• 🏆 Competitive Learning Tournaments
+• 🤝 Collaborative Team Games
+
+*Ready to make learning fun? Which subject would you like to game-ify?*`,
+
+  "how can i create study notes": `📝 **Create Smart Study Notes**
+
+EduHaven's AI-powered note-taking system helps you create effective study materials:
+
+**Note Creation Options:**
+• **Text Notes** - Traditional typing with rich formatting
+• **Audio Notes** - Record and transcribe lectures
+• **Visual Notes** - Add diagrams, screenshots, and images
+• **Flashcards** - Create interactive study cards
+
+**AI-Powered Features:**
+🤖 **Auto-Summarization** - Condense long texts
+🎯 **Key Point Extraction** - Identify important concepts
+📊 **Visual Organization** - Mind maps and flowcharts
+🔍 **Smart Search** - Find notes instantly
+
+**Pro Tips:**
+• Use the Cornell note-taking method
+• Color-code by topic or priority
+• Add timestamps for video content
+• Share notes with study groups
+
+*Would you like help setting up your first note-taking system?*`,
+
+  "i need help with learning": `💫 **Learning Support & Resources**
+
+I'm here to help you overcome any learning challenges! Here are our support options:
+
+**Immediate Help:**
+• 🎯 **Personalized Tutoring** - Get 1-on-1 expert help
+• 📚 **Study Plan Creation** - Custom learning roadmap
+• 🧠 **Learning Strategy** - Effective study techniques
+• ⏰ **Time Management** - Schedule optimization
+
+**Additional Resources:**
+• Video tutorials and walkthroughs
+• Practice exercises with solutions
+• Progress tracking and analytics
+• Peer support communities
+
+**Common Solutions:**
+• Breaking down complex topics
+• Improving focus and concentration
+• Managing study stress
+• Preparing for exams effectively
+
+*Tell me more about what you're struggling with, and I'll provide specific guidance!*`,
+
+  "who are you": `🤖 **About EduHaven AI**
+
+I'm your intelligent learning assistant, powered by advanced AI technology! Here's what I can do for you:
+
+**My Capabilities:**
+• Answer questions about all EduHaven features
+• Help you create effective study plans
+• Explain complex concepts in simple terms
+• Recommend learning resources and sessions
+• Assist with note-taking and organization
+• Provide motivation and learning strategies
+
+**My Mission:**
+To make your learning journey more effective, engaging, and personalized! I'm here 24/7 to support your educational goals.
+
+**Quick Facts:**
+• Powered by Gemini AI technology
+• Integrated with all EduHaven platforms
+• Constantly learning and improving
+• Your personal learning companion
+
+*What would you like to explore together today?*`,
+
+  "about": `🏫 **About EduHaven Platform**
+
+EduHaven is your comprehensive learning ecosystem designed to transform how you learn and grow:
+
+**Our Vision:**
+To create a world where learning is personalized, engaging, and accessible to everyone.
+
+**Key Features:**
+🎓 **Smart Sessions** - Interactive study environments
+🤖 **AI Assistant** (That's me!) - 24/7 learning support
+🎮 **Learning Games** - Gamified education
+📝 **Digital Notes** - Advanced note-taking system
+📊 **Progress Analytics** - Track your learning journey
+
+**What Makes Us Different:**
+• Personalized learning paths for every student
+• AI-powered content recommendations
+• Collaborative learning communities
+• Real-time progress tracking
+• Multi-format content support
+
+**Join 50,000+ learners** who are already transforming their education with EduHaven!
+
+*Ready to start your learning journey?*`,
+
+  "what is eduhaven": `🚀 **Welcome to EduHaven!**
+
+EduHaven is an innovative learning platform that combines cutting-edge technology with proven educational methods:
+
+**Core Platform Features:**
+
+📚 **Study Sessions**
+- Live and recorded learning sessions
+- Interactive whiteboards and tools
+- Group collaboration spaces
+- Expert tutor availability
+
+🎯 **AI-Powered Learning**
+- Personalized study recommendations
+- Smart content organization
+- Progress analytics and insights
+- Adaptive learning paths
+
+🎮 **Educational Games**
+- Subject-specific challenges
+- Competitive learning tournaments
+- Collaborative team activities
+- Achievement and reward system
+
+📝 **Smart Note-Taking**
+- Multi-format note creation
+- AI-powered summarization
+- Easy organization and search
+- Sharing and collaboration
+
+**Our Mission:** To make quality education engaging, accessible, and effective for every learner.
+
+*Which feature would you like to explore first?*`
+};
+
 const Ai = () => {
   const navigate = useNavigate();
   const [question, setQuestion] = useState("");
@@ -57,19 +398,53 @@ const Ai = () => {
     const saved = localStorage.getItem("edu_chat");
     return saved ? JSON.parse(saved) : [];
   });
-  useEffect(() => {
-    localStorage.setItem("edu_chat", JSON.stringify(messages));
-  }, [messages]);
 
+  const [conversationContext, setConversationContext] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [dimensions, setDimensions] = useState({ width: 420, height: 600 });
+  const [dimensions, setDimensions] = useState({ width: 420, height: 720 });
   const resizing = useRef(false);
   const startPos = useRef({ x: 0, y: 0 });
   const startDimensions = useRef({ width: 420, height: 600 });
   const [showVideoSection, setShowVideoSection] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(true);
   const [isQuickActionsExpanded, setIsQuickActionsExpanded] = useState(false);
+
+  const [copiedMessageId, setCopiedMessageId] = useState(null);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editedText, setEditedText] = useState("");
+  const [apiError, setApiError] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isTyping, setIsTyping] = useState(false);
+  const [rateLimitInfo, setRateLimitInfo] = useState(null);
+
+  // Interactive Guided Experience State
+  const [currentExperience, setCurrentExperience] = useState(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [experienceAnswers, setExperienceAnswers] = useState({});
+
+  // Typing effect state
+  const [typingMessages, setTypingMessages] = useState({});
+
+  const debounceTimerRef = useRef(null);
+  const typingIntervalRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem("edu_chat", JSON.stringify(messages));
+  }, [messages]);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const modalEl = document.getElementById("my_modal_1");
@@ -81,18 +456,56 @@ const Ai = () => {
       modalEl.close = () => {
         setIsChatOpen(false);
         setMessages([]);
+        setConversationContext([]);
         setShowVideoSection(false);
+        setApiError(null);
+        setRateLimitInfo(null);
+        // Reset guided experience
+        setCurrentExperience(null);
+        setCurrentStep(0);
+        setExperienceAnswers({});
+        // Reset typing effect
+        setTypingMessages({});
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+        }
       };
     }
   }, []);
 
-  // scroll chat to end
-  useEffect(() => {
-    if (isChatOpen && chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+  // scroll chat to end - but respect user scrolling during typing
+useEffect(() => {
+  if (isChatOpen && chatContainerRef.current) {
+    const chatContainer = chatContainerRef.current;
+    
+    // Don't auto-scroll during typing effects
+    const isTypingEffectRunning = Object.keys(typingMessages).length > 0;
+    
+    if (!isTypingEffectRunning) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
-  }, [isChatOpen, messages]);
+  }
+}, [isChatOpen, messages]); // Remove typingMessages from dependencies
+
+// Separate effect for when typing completes
+useEffect(() => {
+  if (isChatOpen && chatContainerRef.current) {
+    const chatContainer = chatContainerRef.current;
+    const lastMessage = messages[messages.length - 1];
+    
+    if (lastMessage && lastMessage.type === "ai") {
+      const typingState = typingMessages[lastMessage.id];
+      
+      // Scroll when typing completes
+      if (typingState && typingState.isComplete) {
+        setTimeout(() => {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }, 100);
+      }
+    }
+  }
+}, [typingMessages, isChatOpen, messages]);
 
   useEffect(() => {
     if (isChatOpen && !showVideoSection && inputRef.current) {
@@ -100,18 +513,309 @@ const Ai = () => {
     }
   }, [isChatOpen, showVideoSection]);
 
-  const generateQuestion = async () => {
-    if (!question.trim()) {
+  // Start typing effect for a message
+const startTypingEffect = useCallback((messageId, fullText) => {
+  if (typingIntervalRef.current) {
+    clearInterval(typingIntervalRef.current);
+  }
+
+  // Initialize with first character immediately for smooth start
+  setTypingMessages(prev => ({
+    ...prev,
+    [messageId]: {
+      displayedText: fullText.substring(0, 1),
+      fullText,
+      currentIndex: 1,
+      isComplete: false
+    }
+  }));
+
+  let currentIndex = 1; // Start from 1 since we already set the first character
+  
+  typingIntervalRef.current = setInterval(() => {
+    currentIndex += 1;
+    
+    setTypingMessages(prev => ({
+      ...prev,
+      [messageId]: {
+        ...prev[messageId],
+        displayedText: fullText.substring(0, currentIndex),
+        currentIndex,
+        isComplete: currentIndex >= fullText.length
+      }
+    }));
+
+    if (currentIndex >= fullText.length) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+      
+      // Clean up after a delay
+      setTimeout(() => {
+        setTypingMessages(prev => {
+          const newTyping = { ...prev };
+          delete newTyping[messageId];
+          return newTyping;
+        });
+      }, 1000);
+    }
+  }, 20); // Slightly slower for smoother effect
+}, []);
+
+  const debouncedAction = useCallback((action, delay = 500) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      action();
+    }, delay);
+  }, []);
+
+  // Check if query matches hardcoded responses or guided experiences
+  const getHardcodedResponse = (query) => {
+    const normalizedQuery = query.toLowerCase().trim();
+    
+    // Check for guided experience triggers
+    if (normalizedQuery.includes('study plan') || normalizedQuery.includes('learning plan') || normalizedQuery.includes('create study schedule')) {
+      return { type: 'guided', experience: 'study planning' };
+    }
+    
+    if (normalizedQuery.includes('book session') || normalizedQuery.includes('schedule session') || normalizedQuery.includes('join session')) {
+      return { type: 'guided', experience: 'session booking' };
+    }
+    
+    if (normalizedQuery.includes('setup notes') || normalizedQuery.includes('create notes') || normalizedQuery.includes('note system')) {
+      return { type: 'guided', experience: 'note taking' };
+    }
+    
+    // Exact matches for quick actions
+    const exactMatches = {
+      "show me study sessions": HARDCODED_RESPONSES["show me study sessions"],
+      "how do i join learning games": HARDCODED_RESPONSES["how do i join learning games"],
+      "how can i create study notes": HARDCODED_RESPONSES["how can i create study notes"],
+      "i need help with learning": HARDCODED_RESPONSES["i need help with learning"],
+    };
+    
+    if (exactMatches[normalizedQuery]) {
+      return { type: 'hardcoded', response: exactMatches[normalizedQuery] };
+    }
+    
+    // Keyword matches for general queries
+    if (normalizedQuery.includes('who are you') || normalizedQuery.includes('what are you')) {
+      return { type: 'hardcoded', response: HARDCODED_RESPONSES["who are you"] };
+    }
+    
+    if (normalizedQuery.includes('about') && (normalizedQuery.includes('eduhaven') || normalizedQuery.length < 20)) {
+      return { type: 'hardcoded', response: HARDCODED_RESPONSES["about"] };
+    }
+    
+    if (normalizedQuery.includes('what is eduhaven') || normalizedQuery.includes('tell me about eduhaven')) {
+      return { type: 'hardcoded', response: HARDCODED_RESPONSES["what is eduhaven"] };
+    }
+    
+    return null;
+  };
+
+  // Start a guided experience
+  const startGuidedExperience = (experienceKey) => {
+    setCurrentExperience(experienceKey);
+    setCurrentStep(0);
+    setExperienceAnswers({});
+    
+    const experience = GUIDED_EXPERIENCES[experienceKey];
+    const currentStepData = experience.steps[0];
+    
+    const guidedMessage = {
+      id: Date.now(),
+      type: "ai",
+      text: `🎯 **${experienceKey.charAt(0).toUpperCase() + experienceKey.slice(1)} Setup**\n\n${currentStepData.question}`,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      isGuided: true,
+      step: 0,
+      options: currentStepData.options
+    };
+    
+    setMessages(prev => [...prev, guidedMessage]);
+  };
+
+  // Handle option selection in guided experience
+  const handleOptionSelect = (option, stepIndex) => {
+    const experience = GUIDED_EXPERIENCES[currentExperience];
+    const currentStepData = experience.steps[stepIndex];
+    
+    // Save answer
+    setExperienceAnswers(prev => ({
+      ...prev,
+      [currentStepData.type]: option
+    }));
+    
+    // Add user's selection to messages
+    const userMessage = {
+      id: Date.now(),
+      type: "user",
+      text: option,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Check if there are more steps
+    if (stepIndex < experience.steps.length - 1) {
+      // Move to next step
+      const nextStep = stepIndex + 1;
+      setCurrentStep(nextStep);
+      
+      const nextStepData = experience.steps[nextStep];
+      
+      setTimeout(() => {
+        const nextMessage = {
+          id: Date.now() + 1,
+          type: "ai",
+          text: nextStepData.question,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          isGuided: true,
+          step: nextStep,
+          options: nextStepData.options
+        };
+        
+        setMessages(prev => [...prev, nextMessage]);
+      }, 500);
+    } else {
+      // Final step - show summary
+      setCurrentExperience(null);
+      setCurrentStep(0);
+      
+      setTimeout(() => {
+        const finalResponse = experience.finalResponse({
+          ...experienceAnswers,
+          [currentStepData.type]: option
+        });
+        
+        const finalMessage = {
+          id: Date.now() + 1,
+          type: "ai",
+          text: finalResponse,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        };
+        
+        setMessages(prev => [...prev, finalMessage]);
+        setConversationContext(prev => [
+          ...prev,
+          { role: "assistant", text: finalResponse }
+        ].slice(-10));
+      }, 500);
+    }
+  };
+
+  const generateQuestion = async (customQuestion = null) => {
+    const questionToAsk = customQuestion || question;
+
+    if (!questionToAsk.trim()) {
+      return;
+    }
+
+    if (!isOnline) {
+      setApiError("You are offline. Please check your internet connection.");
       return;
     }
 
     setLoading(true);
+    setIsTyping(true);
+    setApiError(null);
+
     const currentTime = new Date().toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
-    const userMessage = { type: "user", text: question, time: currentTime };
+
+    const userMessage = {
+      id: Date.now(),
+      type: "user",
+      text: questionToAsk,
+      time: currentTime
+    };
+
     setMessages((prev) => [...prev, userMessage]);
+
+    // Check for hardcoded response or guided experience first
+    const response = getHardcodedResponse(questionToAsk);
+    
+    if (response) {
+      if (response.type === 'guided') {
+        // Start guided experience
+        setTimeout(() => {
+          startGuidedExperience(response.experience);
+          setLoading(false);
+          setIsTyping(false);
+          setQuestion("");
+          setShowQuickActions(false);
+          setIsQuickActionsExpanded(false);
+        }, 1000);
+        return;
+      } else if (response.type === 'hardcoded') {
+        // Use hardcoded response with typing effect
+        setTimeout(() => {
+          const aiMessageId = Date.now() + 1;
+          const aiMessage = {
+            id: aiMessageId,
+            type: "ai",
+            text: response.response,
+            time: currentTime,
+          };
+          
+          setMessages((prev) => [...prev, aiMessage]);
+          setConversationContext(prev => [
+            ...prev,
+            { role: "assistant", text: response.response }
+          ].slice(-10));
+          
+          // Start typing effect for hardcoded response
+          startTypingEffect(aiMessageId, response.response);
+          
+          setLoading(false);
+          setIsTyping(false);
+          setQuestion("");
+          setShowQuickActions(false);
+          setIsQuickActionsExpanded(false);
+        }, 500);
+        return;
+      }
+    }
+
+    // Use AI model for other queries
+    const updatedContext = [
+      ...conversationContext,
+      { role: "user", text: questionToAsk }
+    ].slice(-10);
+    setConversationContext(updatedContext);
+
+    const contextPrompt = updatedContext.length > 1
+      ? `You are EduHaven AI, an intelligent learning assistant for the EduHaven educational platform. 
+      
+Context of previous conversation:
+${updatedContext.slice(0, -1).map(msg => `${msg.role}: ${msg.text}`).join('\n')}
+
+Current question: ${questionToAsk}
+
+EduHaven Platform Features:
+- Study Sessions (group, 1-on-1, exam prep, topic deep dives)
+- Learning Games (educational games, quizzes, tournaments)
+- AI Notes (smart note-taking, flashcards, summarization)
+- Progress Tracking and Analytics
+- Collaborative Learning Tools
+
+Please provide helpful, educational responses focused on learning, studying, and using the EduHaven platform. If the question is unrelated to education or learning, gently guide the conversation back to how EduHaven can help with learning goals.`
+      : `You are EduHaven AI, an intelligent learning assistant for the EduHaven educational platform. 
+
+EduHaven Platform Features:
+- Study Sessions (group, 1-on-1, exam prep, topic deep dives)
+- Learning Games (educational games, quizzes, tournaments)  
+- AI Notes (smart note-taking, flashcards, summarization)
+- Progress Tracking and Analytics
+- Collaborative Learning Tools
+
+Please provide helpful, educational responses focused on learning, studying, and using the EduHaven platform. If the question is unrelated to education or learning, gently guide the conversation back to how EduHaven can help with learning goals.
+
+Current question: ${questionToAsk}`;
 
     try {
       const response = await fetch(
@@ -124,29 +828,58 @@ const Ai = () => {
           body: JSON.stringify({
             contents: [
               {
-                parts: [{ text: question }],
+                parts: [{ text: contextPrompt }],
               },
             ],
           }),
         }
       );
 
+      if (response.status === 429) {
+        setRateLimitInfo({
+          message: "Rate limit reached. Please wait a moment before trying again.",
+          retryAfter: 60,
+        });
+        throw new Error("Rate limit exceeded");
+      }
+
       const data = await response.json();
 
       if (data && data.candidates && data.candidates.length > 0) {
         const generatedResponse =
-          data.candidates[0]?.content?.parts[0]?.text || "No response found";
+          data.candidates[0]?.content?.parts[0]?.text || "I apologize, but I couldn't generate a response. Please try again or ask about EduHaven's learning features!";
+        
+        // Create AI message
+        const aiMessageId = Date.now() + 1;
         const aiMessage = {
+          id: aiMessageId,
           type: "ai",
           text: generatedResponse,
           time: currentTime,
         };
+        
         setMessages((prev) => [...prev, aiMessage]);
+        setLoading(false);
+        setIsTyping(false);
+        
+        // Start typing effect for AI response
+        startTypingEffect(aiMessageId, generatedResponse);
+
+        setConversationContext(prev => [
+          ...prev,
+          { role: "assistant", text: generatedResponse }
+        ].slice(-10));
       }
     } catch (error) {
       console.error("Error generating response:", error);
-    } finally {
+      setApiError(
+        error.message === "Rate limit exceeded"
+          ? "Too many requests. Please wait a moment before trying again."
+          : "Failed to get response from AI. Please try again."
+      );
       setLoading(false);
+      setIsTyping(false);
+    } finally {
       setQuestion("");
       setShowQuickActions(false);
       setIsQuickActionsExpanded(false);
@@ -154,20 +887,45 @@ const Ai = () => {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !loading) {
-      generateQuestion();
+    if (e.key === "Enter" && !e.shiftKey && !loading) {
+      e.preventDefault();
+      debouncedAction(() => generateQuestion(), 300);
     }
   };
 
   const closeModal = () => {
     setIsChatOpen(false);
     setShowVideoSection(false);
+    setApiError(null);
+    setRateLimitInfo(null);
+    // Reset guided experience
+    setCurrentExperience(null);
+    setCurrentStep(0);
+    setExperienceAnswers({});
+    // Reset typing effect
+    setTypingMessages({});
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
   };
 
   const clearChat = () => {
     setMessages([]);
+    setConversationContext([]);
     localStorage.removeItem("edu_chat");
     setShowQuickActions(true);
+    setApiError(null);
+    // Reset guided experience
+    setCurrentExperience(null);
+    setCurrentStep(0);
+    setExperienceAnswers({});
+    // Reset typing effect
+    setTypingMessages({});
+    if (typingIntervalRef.current) {
+      clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
   };
 
   const handleStartChat = () => {
@@ -186,6 +944,48 @@ const Ai = () => {
         inputRef.current.focus();
       }
     }, 100);
+  };
+
+  const handleCopyMessage = (messageText, messageId) => {
+    navigator.clipboard.writeText(messageText).then(() => {
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    });
+  };
+
+  const handleEditMessage = (messageId, messageText) => {
+    setEditingMessageId(messageId);
+    setEditedText(messageText);
+  };
+
+  const saveEditedMessage = () => {
+    if (!editedText.trim()) return;
+
+    const messageIndex = messages.findIndex(msg => msg.id === editingMessageId);
+    if (messageIndex === -1) return;
+
+    const updatedMessages = [...messages];
+    updatedMessages[messageIndex] = {
+      ...updatedMessages[messageIndex],
+      text: editedText,
+      edited: true,
+    };
+
+    const messagesToRemove = messages.slice(messageIndex + 1);
+    const finalMessages = updatedMessages.slice(0, messageIndex + 1);
+
+    setMessages(finalMessages);
+    setEditingMessageId(null);
+    setEditedText("");
+
+    if (updatedMessages[messageIndex].type === "user") {
+      generateQuestion(editedText);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingMessageId(null);
+    setEditedText("");
   };
 
   // --- Resizable functionality from the top-left corner ---
@@ -227,10 +1027,10 @@ const Ai = () => {
   ];
 
   const quickActions = [
-    { label: "Find Sessions", query: "Show me study sessions", route: "/session" },
-    { label: "Join Games", query: "How do I join learning games?", route: "/games" },
-    { label: "Create Notes", query: "How can I create study notes?", route: "/notes" },
-    { label: "Get Help", query: "I need help with learning", route: "/about" },
+    { label: "Find Sessions", query: "Show me study sessions"},
+    { label: "Join Games", query: "How do I join learning games?"},
+    { label: "Create Notes", query: "How can I create study notes?"},
+    { label: "Get Help", query: "I need help with learning"},
   ];
 
   const QuickActionsMenu = ({ quickActions, onActionClick }) => (
@@ -253,10 +1053,9 @@ const Ai = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => {
-              if (action.route) {
-                navigate(action.route);
-              }
-              onActionClick(action.query);
+              debouncedAction(() => {
+                onActionClick(action.query);
+              }, 200);
             }}
             className="px-3 py-2.5 text-xs font-medium bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:border-indigo-300 dark:hover:border-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-all duration-200 text-left break-words min-h-[44px] flex items-center"
           >
@@ -266,6 +1065,63 @@ const Ai = () => {
       </div>
     </div>
   );
+
+  // Options Component for Guided Experience
+  const OptionsList = ({ options, step, onOptionSelect }) => (
+    <div className="mt-3 space-y-2">
+      <div className="grid grid-cols-1 gap-2">
+        {options.map((option, index) => (
+          <motion.button
+            key={index}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onOptionSelect(option, step)}
+            className="w-full px-4 py-3 text-left bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all duration-200 text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {option}
+          </motion.button>
+        ))}
+      </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+        Select an option to continue
+      </p>
+    </div>
+  );
+
+  const stopGeneration = () => {
+  if (typingIntervalRef.current) {
+    clearInterval(typingIntervalRef.current);
+    typingIntervalRef.current = null;
+  }
+  
+  setLoading(false);
+  setIsTyping(false);
+  
+  // Add "Stopped" message
+  const currentTime = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  
+  const stoppedMessage = {
+    id: Date.now() + 1,
+    type: "ai",
+    text: "Whoa, stop! That wasn’t what you were expecting, was it?",
+    time: currentTime,
+  };
+  
+  setMessages(prev => [...prev, stoppedMessage]);
+  setConversationContext(prev => [
+    ...prev,
+    { role: "assistant", text: "Whoa, stop! That wasn’t what you were expecting, was it?" }
+  ].slice(-10));
+  
+  // Clear any ongoing typing effects
+  setTypingMessages({});
+};
 
   return (
     <div id="manishai">
@@ -303,16 +1159,56 @@ const Ai = () => {
           }
         }
 
-        @keyframes shimmer {
-          0% { background-position: -1000px 0; }
-          100% { background-position: 1000px 0; }
-        }
+        @keyframes morph-blob {
+  0%, 100% {
+    border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
+    transform: scale(1) rotate(0deg);
+  }
+  25% {
+    border-radius: 40% 60% 54% 46% / 49% 60% 40% 51%;
+    transform: scale(1.05) rotate(90deg);
+  }
+  50% {
+    border-radius: 60% 40% 37% 63% / 61% 35% 65% 39%;
+    transform: scale(1.03) rotate(180deg);
+  }
+  75% {
+    border-radius: 33% 67% 53% 47% / 72% 31% 69% 28%;
+    transform: scale(1.07) rotate(270deg);
+  }
+}
+
+.shimmer-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-effect::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    45deg,
+    rgba(var(--shadow-rgb), 0.1),
+    rgba(var(--shadow-rgb), 0.4),
+    rgba(var(--shadow-rgb), 0.1),
+    rgba(var(--shadow-rgb), 0.3)
+  );
+  animation: morph-blob 8s ease-in-out infinite;
+  z-index: -1;
+}
 
         @keyframes particle-float {
           0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.3; }
           25% { transform: translate(10px, -10px) rotate(90deg); opacity: 0.6; }
           50% { transform: translate(0, -20px) rotate(180deg); opacity: 0.3; }
           75% { transform: translate(-10px, -10px) rotate(270deg); opacity: 0.6; }
+        }
+
+        @keyframes typing-dots {
+          0%, 20% { opacity: 0.2; }
+          50% { opacity: 1; }
+          100% { opacity: 0.2; }
         }
 
         .ai-btn-wrapper {
@@ -378,27 +1274,6 @@ const Ai = () => {
           background-size: 200% 200%;
         }
 
-        .shimmer-effect {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .shimmer-effect::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.1),
-            transparent
-          );
-          animation: shimmer 2s infinite;
-        }
-
         .particle {
           position: absolute;
           width: 4px;
@@ -426,6 +1301,16 @@ const Ai = () => {
           opacity: 0.5;
         }
 
+        .message-bold {
+          font-weight: 750;
+          color: inherit;
+        }
+
+        .message-italic {
+          font-style: italic;
+          color: inherit;
+        }
+
         .glow-text {
           text-shadow: 0 0 10px rgba(var(--shadow-rgb), 0.5),
                        0 0 20px rgba(var(--shadow-rgb), 0.3);
@@ -434,6 +1319,38 @@ const Ai = () => {
         .input-glow:focus {
           box-shadow: 0 0 0 3px rgba(var(--shadow-rgb), 0.2),
                       0 0 20px rgba(var(--shadow-rgb), 0.1);
+        }
+
+        .typing-dot {
+          animation: typing-dots 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+          animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+          animation-delay: 0.4s;
+        }
+
+        .typing-cursor {
+          display: inline-block;
+          width: 2px;
+          height: 1em;
+          background-color: currentColor;
+          margin-left: 2px;
+          animation: blink 1s infinite;
+          vertical-align: middle;
+        }
+
+        @keyframes blink {
+          0%, 50% { opacity: 1; }
+          51%, 100% { opacity: 0; }
+        }
+
+        .message-content {
+          min-height: 1.5em;
+          line-height: 1.5;
         }
       `}</style>
 
@@ -534,30 +1451,36 @@ const Ai = () => {
                     <Zap className="w-3 h-3 absolute -top-1 -right-1 txt" style={{ color: "var(--btn)" }} />
                   </div>
                   <h3 className="text-xl txt font-bold glow-text">EduHaven AI</h3>
+                  {!isOnline && (
+                    <div className="flex items-center gap-1 text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-full">
+                      <WifiOff className="w-3 h-3" />
+                      <span>Offline</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  {messages.length > 0 && (
-                    <button
-                      onClick={clearChat}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all duration-300 hover:scale-105"
-                      style={{
-                        background: "rgba(239, 68, 68, 0.1)",
-                        color: "#ef4444",
-                        border: "1px solid rgba(239, 68, 68, 0.3)",
-                      }}
-                      title="Clear Chat"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span className="font-medium">Clear</span>
-                    </button>
-                  )}
-                  <button
-                    onClick={closeModal}
-                    className="p-2 hover:bg-sec rounded-full transition-all duration-200 txt-dim hover:txt hover:rotate-90"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
+  {!showVideoSection && messages.length > 0 && (
+    <button
+      onClick={clearChat}
+      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-all duration-300 hover:scale-105"
+      style={{
+        background: "rgba(239, 68, 68, 0.1)",
+        color: "#ef4444",
+        border: "1px solid rgba(239, 68, 68, 0.3)",
+      }}
+      title="Clear Chat"
+    >
+      <Trash2 className="w-3.5 h-3.5" />
+      <span className="font-medium">Clear</span>
+    </button>
+  )}
+  <button
+    onClick={closeModal}
+    className="p-2 hover:bg-sec rounded-full transition-all duration-200 txt-dim hover:txt hover:rotate-90"
+  >
+    <X className="h-5 w-5" />
+  </button>
+</div>
               </div>
 
               {/* Video/Welcome Section */}
@@ -583,12 +1506,12 @@ const Ai = () => {
                   >
                     <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border-2 border-white/50 dark:border-gray-700/50 transform hover:scale-[1.02] transition-transform duration-300">
                       <video
-      ref={videoRef}
-      className="w-full h-full object-fill"
-      onEnded={handleVideoEnd}
-      playsInline
-      autoPlay
-    >
+                        ref={videoRef}
+                        className="w-full h-full object-fill"
+                        onEnded={handleVideoEnd}
+                        playsInline
+                        autoPlay
+                      >
                         <source src="/eduhaven-intro.mp4" type="video/mp4" />
                         Your browser does not support the video tag.
                       </video>
@@ -768,6 +1691,33 @@ const Ai = () => {
                       background: "radial-gradient(ellipse at top, rgba(var(--shadow-rgb), 0.03), transparent)",
                     }}
                   >
+                    {apiError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 flex items-start gap-2"
+                      >
+                        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm text-red-700 dark:text-red-300">{apiError}</p>
+                          {rateLimitInfo && (
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                              Please wait {rateLimitInfo.retryAfter} seconds before trying again.
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setApiError(null);
+                            setRateLimitInfo(null);
+                          }}
+                          className="text-red-500 hover:text-red-700 dark:hover:text-red-300"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </motion.div>
+                    )}
+
                     {messages.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full space-y-6">
                         <div className="relative">
@@ -808,7 +1758,7 @@ const Ai = () => {
                     ) : (
                       messages.map((msg, index) => (
                         <motion.div
-                          key={index}
+                          key={msg.id}
                           custom={index}
                           variants={messageVariants}
                           initial="hidden"
@@ -820,36 +1770,119 @@ const Ai = () => {
                             animationDelay: `${index * 0.1}s`,
                           }}
                         >
-                          <div
-                            className={`py-3 px-4 rounded-2xl max-w-[85%] ${
-                              msg.type === "user"
-                                ? "gradient-border shimmer-effect"
-                                : "bg-sec"
-                            }`}
-                            style={
-                              msg.type === "user"
-                                ? {
-                                    background: `linear-gradient(135deg, rgba(var(--shadow-rgb), 0.15), rgba(var(--shadow-rgb), 0.05))`,
-                                    backdropFilter: "blur(10px)",
-                                    boxShadow: `0 4px 15px rgba(var(--shadow-rgb), 0.2)`,
+                          {editingMessageId === msg.id ? (
+                            <div className="w-full max-w-[85%] space-y-2">
+                              <textarea
+                                value={editedText}
+                                onChange={(e) => setEditedText(e.target.value)}
+                                className="w-full p-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                rows={3}
+                                autoFocus
+                              />
+                              <div className="flex gap-2 justify-end">
+                                <button
+                                  onClick={cancelEdit}
+                                  className="px-3 py-1.5 text-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={saveEditedMessage}
+                                  className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                                >
+                                  Save
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="relative group">
+                                <div
+                                  className={`py-3 px-4 rounded-2xl max-w-[85%] ${
+                                    msg.type === "user"
+                                      ? "gradient-border shimmer-effect"
+                                      : "bg-sec"
+                                  }`}
+                                  style={
+                                    msg.type === "user"
+                                      ? {
+                                          background: `linear-gradient(135deg, rgba(var(--shadow-rgb), 0.15), rgba(var(--shadow-rgb), 0.05))`,
+                                          backdropFilter: "blur(10px)",
+                                          boxShadow: `0 4px 15px rgba(var(--shadow-rgb), 0.2)`,
+                                        }
+                                      : {
+                                          boxShadow: `0 2px 10px rgba(0, 0, 0, 0.1)`,
+                                        }
                                   }
-                                : {
-                                    boxShadow: `0 2px 10px rgba(0, 0, 0, 0.1)`,
-                                  }
-                            }
-                          >
-                            <p className="txt leading-relaxed">{msg.text}</p>
-                          </div>
-                          <span
-                            className="text-xs txt-dim mt-1.5 font-medium"
-                            style={{ opacity: 0.7 }}
-                          >
-                            {msg.time}
-                          </span>
+                                >
+                                  <div className="message-content">
+                                    {msg.type === "ai" && typingMessages[msg.id] ? (
+                                      <p 
+                                        className="txt leading-relaxed whitespace-pre-wrap"
+                                        dangerouslySetInnerHTML={{ 
+                                          __html: formatBoldText(typingMessages[msg.id].displayedText) + 
+                                                  (!typingMessages[msg.id].isComplete ? '<span class="typing-cursor"></span>' : '')
+                                        }}
+                                      />
+                                    ) : (
+                                      <p 
+        className="txt leading-relaxed whitespace-pre-wrap"
+        dangerouslySetInnerHTML={{ __html: formatBoldText(msg.text) }}
+      />
+                                    )}
+                                  </div>
+                                  {msg.edited && (
+                                    <span className="text-xs text-gray-400 dark:text-gray-500 italic mt-1 block">
+                                      (edited)
+                                    </span>
+                                  )}
+                                  
+                                  {/* Guided Experience Options */}
+                                  {msg.isGuided && msg.options && (
+                                    <OptionsList 
+                                      options={msg.options} 
+                                      step={msg.step}
+                                      onOptionSelect={handleOptionSelect}
+                                    />
+                                  )}
+                                </div>
+                                <div className="absolute top-0 right-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mt-8">
+                                  {msg.type === "ai" && !msg.isGuided && (!typingMessages[msg.id] || typingMessages[msg.id]?.isComplete) && (
+                                    <button
+                                      onClick={() => handleCopyMessage(msg.text, msg.id)}
+                                      className="p-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+                                      title="Copy message"
+                                    >
+                                      {copiedMessageId === msg.id ? (
+                                        <Check className="w-3.5 h-3.5 text-green-500" />
+                                      ) : (
+                                        <Copy className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
+                                      )}
+                                    </button>
+                                  )}
+                                  {msg.type === "user" && (
+                                    <button
+                                      onClick={() => handleEditMessage(msg.id, msg.text)}
+                                      className="p-1.5 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+                                      title="Edit message"
+                                    >
+                                      <Edit2 className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                              <span
+                                className="text-xs txt-dim mt-1.5 font-medium"
+                                style={{ opacity: 0.7 }}
+                              >
+                                {msg.time}
+                              </span>
+                            </>
+                          )}
                         </motion.div>
                       ))
                     )}
-                    {loading && (
+                    {(loading || isTyping) && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -861,11 +1894,11 @@ const Ai = () => {
                         <div className="p-3 sm:p-4 rounded-2xl rounded-bl-md shadow-md border bg-white dark:bg-gray-800 border-indigo-100 dark:border-gray-700">
                           <div className="flex items-center space-x-3">
                             <div className="flex space-x-1">
-                              <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                              <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                              <div className="w-2 h-2 bg-indigo-400 rounded-full typing-dot"></div>
+                              <div className="w-2 h-2 bg-indigo-400 rounded-full typing-dot"></div>
+                              <div className="w-2 h-2 bg-indigo-400 rounded-full typing-dot"></div>
                             </div>
-                            <span className="text-sm text-gray-600 dark:text-gray-300">Thinking...</span>
+                            <span className="text-sm text-gray-600 dark:text-gray-300">AI is thinking...</span>
                           </div>
                         </div>
                       </motion.div>
@@ -899,14 +1932,13 @@ const Ai = () => {
                                   }}
                                   whileTap={{ scale: 0.98 }}
                                   onClick={() => {
-                                    if (action.route) {
-                                      navigate(action.route);
-                                    }
-                                    setQuestion(action.query);
-                                    setTimeout(() => {
-                                      generateQuestion();
-                                      setShowQuickActions(false);
-                                    }, 100);
+                                    debouncedAction(() => {
+                                      setQuestion(action.query);
+                                      setTimeout(() => {
+                                        generateQuestion();
+                                        setShowQuickActions(false);
+                                      }, 100);
+                                    }, 200);
                                   }}
                                   className="px-3 py-2.5 text-xs font-medium bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:border-indigo-300 dark:hover:border-indigo-600 hover:text-indigo-700 dark:hover:text-indigo-300 transition-all duration-200 text-left break-words min-h-[44px] flex items-center"
                                 >
@@ -953,17 +1985,31 @@ const Ai = () => {
                           target.style.height = 'auto';
                           target.style.height = Math.min(target.scrollHeight, 80) + 'px';
                         }}
-                        disabled={loading}
+                        disabled={loading || !isOnline || currentExperience}
                       />
                       <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={generateQuestion}
-                        disabled={!question.trim() || loading}
-                        className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all flex-shrink-0"
-                      >
-                        {loading ? <Loader className="animate-spin w-4 h-4" /> : <Send className="w-4 h-4 sm:w-5 sm:h-5" />}
-                      </motion.button>
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+  onClick={() => {
+    if (loading || isTyping || Object.keys(typingMessages).length > 0) {
+      stopGeneration();
+    } else {
+      debouncedAction(() => generateQuestion(), 300);
+    }
+  }}
+  disabled={(!question.trim() && !(loading || isTyping || Object.keys(typingMessages).length > 0)) || !isOnline || currentExperience}
+  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all flex-shrink-0 ${
+    loading || isTyping || Object.keys(typingMessages).length > 0
+      ? "bg-gradient-to-r from-red-600 to-pink-600 dark:from-red-500 dark:to-pink-500"
+      : "bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500"
+  }`}
+>
+  {loading || isTyping || Object.keys(typingMessages).length > 0 ? (
+    <Square className="w-4 h-4 sm:w-5 sm:h-5" />
+  ) : (
+    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+  )}
+</motion.button>
                     </div>
                     
                     {/* Expanded Quick Actions Menu */}
@@ -978,13 +2024,11 @@ const Ai = () => {
                           <QuickActionsMenu 
                             quickActions={quickActions}
                             onActionClick={(query) => {
-                              const action = quickActions.find(a => a.query === query);
-                              if (action && action.route) {
-                                navigate(action.route);
-                              }
-                              setQuestion(query);
-                              setTimeout(generateQuestion, 100);
-                              setIsQuickActionsExpanded(false);
+                              debouncedAction(() => {
+                                setQuestion(query);
+                                setTimeout(generateQuestion, 100);
+                                setIsQuickActionsExpanded(false);
+                              }, 200);
                             }}
                           />
                         </motion.div>
