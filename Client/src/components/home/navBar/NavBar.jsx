@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { User } from "lucide-react";
 import { Link } from "react-router-dom";
-import Ai from "./AiChatbot.jsx";
+import AiChatbot from "./AiChatbot";
 import PinnedLinks from "./PinnedLinks.jsx";
 import Slogan from "./Slogan.jsx";
 import OnlineUsers from "./OnlineUsers.jsx";
@@ -23,7 +23,7 @@ function NavBar() {
       <Slogan />
       <div className="flex items-center gap-4">
         {isLoggedIn && <OnlineUsers />}
-        <Ai onShowId={setSelectedId} />
+        <AiChatbot onShowId={setSelectedId} />
         <Calculator />
         {!isLoggedIn && (
           <Link
