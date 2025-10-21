@@ -18,6 +18,7 @@ import {
   useTrashNote,
 } from "@/queries/NoteQueries";
 import axiosInstance from "@/utils/axios";
+import NoteFooter from "./NoteFooter";
 
 const getCurrentUserId = () => {
   const token = localStorage.getItem("token");
@@ -70,6 +71,8 @@ const NoteCard = ({
       collaborator.user._id === currentUserId && collaborator.access === "edit"
   );
   const canEdit = isOwner || hasEditAccess;
+  // Check is the note is shared
+  const isSharedCollaborator = !isOwner && note?.collaborators?.length > 0;
 
   // Use props if provided, otherwise use store
   const actualShowColorPicker =
@@ -225,9 +228,8 @@ const NoteCard = ({
         </div>
       </div>
 
-      <div className="text-xs mt-2" style={{ color: "var(--txt-disabled)" }}>
-        {new Date(note?.createdAt).toLocaleDateString()}
-      </div>
+      {/* Note footer  */}
+      <NoteFooter note={note} />
 
       {hovered && (
         <motion.div
@@ -245,7 +247,7 @@ const NoteCard = ({
             variant="transparent"
             size="icon"
             className="p-1 rounded hover:bg-[var(--bg-secondary)]"
-            disabled={!canEdit}
+            disabled={!canEdit || isSharedCollaborator}
           >
             <Palette size={16} />
           </Button>
@@ -255,7 +257,7 @@ const NoteCard = ({
             variant="transparent"
             size="icon"
             className="p-1 rounded hover:bg-[var(--bg-secondary)]"
-            disabled={isArchiving || !canEdit}
+            disabled={isArchiving || !canEdit || isSharedCollaborator}
           >
             {isArchiving ? (
               <Loader2 size={16} className="animate-spin" />
@@ -283,7 +285,7 @@ const NoteCard = ({
             variant="transparent"
             size="icon"
             className="p-1 rounded hover:bg-[var(--bg-secondary)]"
-            disabled={!canEdit}
+            disabled={!canEdit || isSharedCollaborator}
           >
             <UserPlus size={16} />
           </Button>
@@ -293,7 +295,7 @@ const NoteCard = ({
             variant="transparent"
             size="icon"
             className="p-1 rounded hover:bg-[var(--bg-secondary)]"
-            disabled={!canEdit}
+            disabled={!canEdit || isSharedCollaborator}
           >
             {isDeleting ? (
               <Loader2 size={16} className="animate-spin" />
