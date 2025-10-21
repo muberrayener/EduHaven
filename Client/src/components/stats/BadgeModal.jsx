@@ -7,7 +7,7 @@ const BadgeModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <PopupContainer title="All Badges" onClose={onClose} width={"auto"}>
+    <PopupContainer title="All Badges" onClose={onClose} width={"fit"}>
       {/* Content */}
       <div className="p-6 overflow-y-auto max-h-[60vh]">
         <p className="text-[var(--txt-dim)] mb-6">
