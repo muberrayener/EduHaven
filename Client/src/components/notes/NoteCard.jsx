@@ -32,7 +32,19 @@ const getCurrentUserId = () => {
   }
 };
 
-const NoteCard = ({ note, getPlainTextPreview, onExport }) => {
+const NoteCard = ({
+  note,
+  onSelect,
+  onPin,
+  onSendToTrash,
+  onArchive,
+  onExport,
+  onColorChange,
+  showColorPicker,
+  setShowColorPicker,
+  getPlainTextPreview,
+  isArchiving,
+}) => {
   const [hovered, setHovered] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -41,8 +53,8 @@ const NoteCard = ({ note, getPlainTextPreview, onExport }) => {
     setSelectedNote,
     togglePin,
     changeColor,
-    showColorPicker,
-    setShowColorPicker,
+    showColorPicker: storeShowColorPicker,
+    setShowColorPicker: storeSetShowColorPicker,
   } = useNoteStore();
 
   const updateNoteMutation = useUpdateNote();
@@ -59,29 +71,59 @@ const NoteCard = ({ note, getPlainTextPreview, onExport }) => {
   );
   const canEdit = isOwner || hasEditAccess;
 
-  // Create handlers that combine store actions with mutations
+  // Use props if provided, otherwise use store
+  const actualShowColorPicker =
+    showColorPicker !== undefined ? showColorPicker : storeShowColorPicker;
+  const actualSetShowColorPicker =
+    setShowColorPicker || storeSetShowColorPicker;
+
+  // Create handlers that combine prop callbacks with store actions
   const handleTogglePin = (id, pinnedAt) => {
     if (!canEdit) return;
-    const { updates } = togglePin(id, pinnedAt);
-    updateNoteMutation.mutate({ id, ...updates });
+    if (onPin) {
+      onPin(id, pinnedAt);
+    } else {
+      const { updates } = togglePin(id, pinnedAt);
+      updateNoteMutation.mutate({ id, ...updates });
+    }
   };
 
   const handleChangeColor = (id, color) => {
     if (!canEdit) return;
-    const { updates } = changeColor(id, color);
-    updateNoteMutation.mutate({ id, ...updates });
+    if (onColorChange) {
+      onColorChange(id, color);
+    } else {
+      const { updates } = changeColor(id, color);
+      updateNoteMutation.mutate({ id, ...updates });
+    }
   };
 
   const handleArchiveNote = (noteToArchive) => {
     if (!canEdit) return;
-    archiveNoteMutation.mutate(noteToArchive._id);
+    if (onArchive) {
+      onArchive(noteToArchive);
+    } else {
+      archiveNoteMutation.mutate(noteToArchive._id);
+    }
   };
 
   const handleSendToTrash = (id) => {
     setIsDeleting(true);
     if (!canEdit) return;
-    trashNoteMutation.mutate(id);
+    if (onSendToTrash) {
+      onSendToTrash(id);
+    } else {
+      trashNoteMutation.mutate(id);
+    }
     setIsDeleting(false);
+  };
+
+  const handleSelectNote = (note) => {
+    if (onSelect) {
+      onSelect(note);
+    } else {
+      setSelectedNote(note);
+    }
   };
 
   const getColorStyle = (colorName) => {
@@ -124,8 +166,8 @@ const NoteCard = ({ note, getPlainTextPreview, onExport }) => {
       if (error.response) {
         throw new Error(
           error.response.data?.error ||
-          error.response.data?.message ||
-          "Failed to share note"
+            error.response.data?.message ||
+            "Failed to share note"
         );
       } else {
         throw error;
@@ -140,7 +182,7 @@ const NoteCard = ({ note, getPlainTextPreview, onExport }) => {
         ...getColorStyle(note?.color),
         minHeight: "140px",
       }}
-      onClick={() => setSelectedNote(note)}
+      onClick={() => handleSelectNote(note)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -151,8 +193,9 @@ const NoteCard = ({ note, getPlainTextPreview, onExport }) => {
         }}
         className={`absolute top-2 right-2 p-1 rounded-full bg-black/10 hover:bg-black/20 transition-opacity
 
-        ${note?.pinnedAt ? "opacity-100" : hovered ? "opacity-100" : "opacity-0"
-          }`}
+        ${
+          note?.pinnedAt ? "opacity-100" : hovered ? "opacity-100" : "opacity-0"
+        }`}
         disabled={!canEdit}
       >
         <Pin
@@ -195,8 +238,8 @@ const NoteCard = ({ note, getPlainTextPreview, onExport }) => {
         >
           <Button
             onClick={() =>
-              setShowColorPicker(
-                showColorPicker === note?._id ? null : note?._id
+              actualSetShowColorPicker(
+                actualShowColorPicker === note?._id ? null : note?._id
               )
             }
             variant="transparent"
@@ -212,13 +255,19 @@ const NoteCard = ({ note, getPlainTextPreview, onExport }) => {
             variant="transparent"
             size="icon"
             className="p-1 rounded hover:bg-[var(--bg-secondary)]"
-            disabled={!canEdit}
+            disabled={isArchiving || !canEdit}
           >
-            <Archive size={16} />
+            {isArchiving ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Archive size={16} />
+            )}
           </Button>
 
           <Button
-            onClick={() => onExport(note)}
+            onClick={() =>
+              onExport ? onExport(note) : console.log("Export note:", note)
+            }
             variant="transparent"
             size="icon"
             className="p-1 rounded hover:bg-[var(--bg-secondary)]"
@@ -255,7 +304,7 @@ const NoteCard = ({ note, getPlainTextPreview, onExport }) => {
         </motion.div>
       )}
 
-      {showColorPicker === note?._id && (
+      {actualShowColorPicker === note?._id && (
         <motion.div
           className="absolute bottom-12 left-2 border border-[var(--bg-ter)] p-2 shadow-lg z-20 flex gap-1 flex-wrap bg-[var(--bg-ter)] rounded-lg"
           onClick={(e) => e.stopPropagation()}
