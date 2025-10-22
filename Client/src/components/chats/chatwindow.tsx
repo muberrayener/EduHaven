@@ -2,112 +2,15 @@ import { useState, useRef, useEffect } from "react";
 import { Send, MoreVertical, Smile, User, Users } from "lucide-react";
 import EmojiPicker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
-
-// Dummy messages for demonstration
-const getDummyMessages = (userId) => {
-  const messageTemplates = {
-    1: [
-      {
-        id: 1,
-        text: "Hey! How's the studying going?",
-        sender: "other",
-        timestamp: "10:30 AM",
-      },
-      {
-        id: 2,
-        text: "Pretty good! Working on calculus problems.",
-        sender: "me",
-        timestamp: "10:32 AM",
-      },
-      {
-        id: 3,
-        text: "Need any help? I'm pretty good with derivatives.",
-        sender: "other",
-        timestamp: "10:33 AM",
-      },
-      {
-        id: 4,
-        text: "That would be awesome! I'm struggling with the chain rule.",
-        sender: "me",
-        timestamp: "10:35 AM",
-      },
-      {
-        id: 5,
-        text: "No problem! Want to hop on a video call?",
-        sender: "other",
-        timestamp: "10:36 AM",
-      },
-    ],
-    2: [
-      {
-        id: 1,
-        text: "Thanks for the study notes!",
-        sender: "other",
-        timestamp: "2:15 PM",
-      },
-      {
-        id: 2,
-        text: "You're welcome! How did the exam go?",
-        sender: "me",
-        timestamp: "2:20 PM",
-      },
-      {
-        id: 3,
-        text: "Really well! Your notes were super helpful.",
-        sender: "other",
-        timestamp: "2:22 PM",
-      },
-    ],
-    3: [
-      {
-        id: 1,
-        text: "Hey, can we reschedule our study session?",
-        sender: "other",
-        timestamp: "Yesterday",
-      },
-      {
-        id: 2,
-        text: "Sure! What time works better for you?",
-        sender: "me",
-        timestamp: "Yesterday",
-      },
-    ],
-    5: [
-      {
-        id: 1,
-        text: "Don't forget about tomorrow's group study at 3 PM",
-        sender: "other",
-        timestamp: "Yesterday",
-      },
-      {
-        id: 2,
-        text: "What topics are we covering?",
-        sender: "me",
-        timestamp: "Yesterday",
-      },
-      {
-        id: 3,
-        text: "Data structures and algorithms",
-        sender: "other",
-        timestamp: "Yesterday",
-      },
-      {
-        id: 4,
-        text: "Perfect! I'll bring my notes on binary trees",
-        sender: "me",
-        timestamp: "Yesterday",
-      },
-    ],
-  };
-
-  return messageTemplates[userId] || [];
-};
+import UseSocketContext from "../../contexts/SocketContext"; // adjust path if needed
 
 function ChatWindow({ selectedUser }) {
+  const { socket, isConnected, onlineUsers, user } = UseSocketContext();
+
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
-  // the state variables for setting states of the emojipicker
+
   const [showEmoji, setShowEmoji] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
 
@@ -116,76 +19,139 @@ function ChatWindow({ selectedUser }) {
   const emojiButtonRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // Load messages when user is selected
+  function getRoomId(user1, user2) {
+    return [user1, user2].sort().join("_");
+  }
+
   useEffect(() => {
-    if (selectedUser) {
-      setMessages(getDummyMessages(selectedUser.id));
+    if (socket && selectedUser && user) {
+      const roomId = getRoomId(user.id, selectedUser.id);
+      socket.emit("join_room", { roomId });
     }
-  }, [selectedUser]);
+  }, [socket, selectedUser, user]);
 
-  // Auto scroll to bottom when new messages arrive
+  // Receive real-time messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  if (!socket || !selectedUser) return;
 
-  const handleSendMessage = () => {
-    if (!message.trim() || !selectedUser) return;
+  const roomId = getRoomId(user.id, selectedUser.id); // Consistent shared room ID
 
-    const newMessage = {
-      id: Date.now(),
-      text: message,
-      sender: "me",
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
+  const handleReceiveMessage = (data) => {
+    if (data.roomId !== roomId) return; // 🚨 Ignore if it's from another room
 
-    setMessages((prev) => [...prev, newMessage]);
-    setMessage("");
-    setCursorPosition(0);
-
-    // This hook is to close the emojipicker when clicked outside
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (
-          emojiPickerRef.current &&
-          !emojiPickerRef.current.contains(event.target) &&
-          emojiButtonRef.current &&
-          !emojiButtonRef.current.contains(event.target)
-        ) {
-          setShowEmoji(false);
-        }
-      };
-
-      if (showEmoji) {
-        document.addEventListener("mousedown", handleClickOutside);
-      }
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }, [showEmoji]);
-
-    // TODO: Connect to backend - Send message via socket/API
-    // Example: socket.emit('sendMessage', { userId: selectedUser.id, message: message });
-
-    // Simulate typing indicator and response (remove this in real implementation)
-    setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      const autoReply = {
-        id: Date.now() + 1,
-        text: "Thanks for your message! I'll get back to you soon.",
-        sender: "other",
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: data.id || Date.now(),
+        text: data.message || data.text,
+        sender: data.userId === user.id ? "me" : "other",
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         }),
-      };
-      setMessages((prev) => [...prev, autoReply]);
-    }, 2000);
+      },
+    ]);
   };
+
+  socket.on("new_message", handleReceiveMessage);
+
+  return () => {
+    socket.off("new_message", handleReceiveMessage);
+  };
+}, [socket, selectedUser, user]);
+
+
+  // Emit typing event when message is being typed
+  useEffect(() => {
+  if (!socket || !selectedUser) return;
+
+  const roomId = getRoomId(user.id, selectedUser.id);
+  if (message.trim() === "") {
+    socket.emit("typing_stop", { roomId });
+    return;
+  }
+
+  socket.emit("typing_start", { roomId });
+
+  const timeoutId = setTimeout(() => {
+    socket.emit("typing_stop", { roomId });
+  }, 2000);
+
+  return () => clearTimeout(timeoutId);
+}, [message, socket, selectedUser, user]);
+
+
+  // Listen for typing indicator
+  useEffect(() => {
+  if (!socket || !selectedUser) return;
+
+  const handleTyping = (data) => {
+    if (data.userId === selectedUser.id) {
+      setIsTyping(data.isTyping);
+    }
+  };
+
+  socket.on("user_typing", handleTyping);
+  return () => socket.off("user_typing", handleTyping);
+}, [socket, selectedUser]);
+
+
+  // Auto scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Close emoji picker on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target) &&
+        emojiButtonRef.current &&
+        !emojiButtonRef.current.contains(event.target)
+      ) {
+        setShowEmoji(false);
+      }
+    };
+
+    if (showEmoji) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmoji]);
+
+  const handleSendMessage = () => {
+    if (!message.trim() || !selectedUser || !socket) return;
+
+    const roomId = getRoomId(user.id, selectedUser.id); // 💡 shared roomId
+
+    const newMessage = {
+      id: Date.now(), // local fallback ID
+      text: message,
+      senderId: user.id,
+      receiverId: selectedUser.id,
+      roomId, // 🧠 include this
+      timestamp: new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      }),
+    };
+
+    // Do not add message locally (optimistic) to avoid duplicate when server echoes.
+    // Emit to server; server will broadcast 'new_message' and listener will append it.
+    socket.emit("send_message", {
+      roomId,
+      message: message.trim(),
+      messageType: "text",
+    });
+
+    setMessage("");
+    setCursorPosition(0);
+  };
+
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -194,17 +160,14 @@ function ChatWindow({ selectedUser }) {
     }
   };
 
-  // To make sure to track the emojipicker state
   const toggleEmojiPicker = () => {
     setShowEmoji(!showEmoji);
   };
 
-  // To insert emoji into our message
   const onEmojiSelect = (emoji) => {
     const textarea = textareaRef.current;
     if (textarea) {
       const position = textarea.selectionStart || cursorPosition;
-
       const newMessage =
         message.slice(0, position) + emoji.native + message.slice(position);
 
@@ -230,7 +193,6 @@ function ChatWindow({ selectedUser }) {
     }
   };
 
-  // Empty state when no user is selected
   if (!selectedUser) {
     return (
       <div
@@ -450,10 +412,6 @@ function ChatWindow({ selectedUser }) {
             <Send className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
-
-        {/* TODO: Connect to backend - Add the following features:
-         * 1. Real-time messaging via WebSocket
-         */}
       </div>
     </div>
   );
