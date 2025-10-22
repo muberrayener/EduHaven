@@ -21,6 +21,8 @@ import { useEffect, useRef, useState } from "react";
 import NoteEditor from "@/components/notes/NoteEditor.jsx";
 import NoteHeader from "@/components/notes/NoteHeader.jsx";
 import NotesList from "@/components/notes/NotesList.jsx";
+import NotesSkeletonLoader from "@/components/skeletons/NotesSkeletonLoader.jsx";
+import NotesHeaderSkeleton from "@/components/skeletons/NotesHeaderSkeleton.jsx";
 
 import {
   useArchivedNotes,
@@ -475,16 +477,19 @@ const Notes = () => {
     (note) => !note.pinnedAt
   );
 
-  if (status == "active" && isLoading) {
-    return <p>Loading notes...</p>;
-  }
-
-  if (status == "archive" && isArchiveLoading) {
-    return <p>Loading archived notes...</p>;
-  }
-
-  if (status == "trash" && isTrashLoading) {
-    return <p>Loading trashed notes...</p>;
+  if (
+    (status === "active" && isLoading) ||
+    (status === "archive" && isArchiveLoading) ||
+    (status === "trash" && isTrashLoading)
+  ) {
+    return (
+      <>
+      <NotesHeaderSkeleton/>
+      <div style={{ marginTop: "1.5rem" }}>
+        <NotesSkeletonLoader count={12} />
+      </div>
+      </>
+    );
   }
 
   return (
