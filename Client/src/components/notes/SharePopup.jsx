@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
 import { useRemoveCollaborator, useGenerateShareLink } from "@/queries/NoteQueries";
 import axiosInstance from "@/utils/axios";
+import PopupContainer from "../ui/Popup";
 
 const SharePopup = ({ note, onClose, onShare }) => {
   const [visibility, setVisibility] = useState(note?.visibility || "private");
@@ -134,18 +135,7 @@ const SharePopup = ({ note, onClose, onShare }) => {
   };
 
   return (
-    <motion.div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <motion.div className="bg-[var(--bg-primary)] rounded-lg p-6 w-96 max-w-[90vw] shadow-xl border border-[var(--bg-ter)]"
-        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
-
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-[var(--txt)]">Share "{note?.title}"</h3>
-          <Button variant="transparent" size="icon" onClick={onClose} className="p-1 rounded-full hover:bg-[var(--bg-ter)]">
-            <X size={20} />
-          </Button>
-        </div>
-
+    <PopupContainer title={`Share ${note?.title}`} onClose={onClose}>
         <div className="space-y-6">
           {/* Add People */}
           <div>
@@ -288,8 +278,8 @@ const SharePopup = ({ note, onClose, onShare }) => {
             <Button onClick={onClose} variant="secondary">Done</Button>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+
+    </PopupContainer>
   );
 };
 
