@@ -22,7 +22,6 @@ import NoteEditor from "@/components/notes/NoteEditor.jsx";
 import NoteHeader from "@/components/notes/NoteHeader.jsx";
 import NotesList from "@/components/notes/NotesList.jsx";
 import NotesSkeletonLoader from "@/components/skeletons/NotesSkeletonLoader.jsx";
-import NotesHeaderSkeleton from "@/components/skeletons/NotesHeaderSkeleton.jsx";
 
 import {
   useArchivedNotes,
@@ -484,7 +483,7 @@ const Notes = () => {
   ) {
     return (
       <>
-      <NotesHeaderSkeleton/>
+      <NoteHeader createNewNote={createNewNote} />
       <div style={{ marginTop: "1.5rem" }}>
         <NotesSkeletonLoader count={12} />
       </div>
