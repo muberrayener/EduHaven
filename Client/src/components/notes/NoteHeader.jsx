@@ -1,7 +1,7 @@
 import { Archive, FileText, Plus, Search, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { useNoteStore } from '@/stores/useNoteStore';
+import { useNoteStore } from "@/stores/useNoteStore";
 
 const NoteHeader = ({ createNewNote }) => {
   const {
@@ -104,9 +104,9 @@ const NoteHeader = ({ createNewNote }) => {
           placeholder="Search notes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full py-2.5 pl-10 pr-3 border text-sm outline-none"
+          className="w-full py-2.5 pl-10 pr-3 border text-sm outline-none transition-all duration-200 focus:border-[var(--btn)]"
           style={{
-            borderColor: "var(--bg-sec)",
+            borderColor: "var(--bg-ter)",
             borderRadius: "var(--radius)",
             backgroundColor: "var(--bg-sec)",
             color: "var(--txt)",

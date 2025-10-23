@@ -462,17 +462,27 @@ const Notes = () => {
     return text.substring(0, 100) + (text.length > 100 ? "..." : "");
   };
 
-  const filteredNotes = notesObj[status].filter((note) => {
-    const plainContent = getPlainTextPreview(note.content);
-    const matchesSearch =
-      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      plainContent.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
+  const filterNotesBySearch = (notes) => {
+    if (!searchTerm.trim()) return notes;
 
-  const pinnedNotes = (notesObj[status] || []).filter((note) => note.pinnedAt);
-  const unpinnedNotes = (notesObj[status] || []).filter(
-    (note) => !note.pinnedAt
+    const search = searchTerm.toLowerCase().trim();
+    return notes.filter((note) => {
+      const title = (note.title || "").toLowerCase();
+      const plainContent = getPlainTextPreview(
+        note.content || ""
+      ).toLowerCase();
+      return title.includes(search) || plainContent.includes(search);
+    });
+  };
+
+  const allNotes = notesObj[status] || [];
+  const filteredNotes = filterNotesBySearch(allNotes);
+
+  const pinnedNotes = filterNotesBySearch(
+    allNotes.filter((note) => note.pinnedAt)
+  );
+  const unpinnedNotes = filterNotesBySearch(
+    allNotes.filter((note) => !note.pinnedAt)
   );
 
   if (status == "active" && isLoading) {
@@ -512,7 +522,7 @@ const Notes = () => {
 
           {status == "trash" && (
             <TrashNotes
-              notes={trashNotes}
+              notes={filteredNotes}
               onDelete={deleteNote}
               onRestore={restoreNote}
               getPlainTextPreview={getPlainTextPreview}
