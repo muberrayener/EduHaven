@@ -41,7 +41,7 @@ export const getRoomLists = async (req, res) => {
     
     for (const r of rooms) {
       const isCreator = r.createdBy.toString() === userId.toString();
-      const isMember = r.members.some(memberId => memberId.toString() === userId.toString());
+      const isMember = (r.members || []).some(memberId => memberId.toString() === userId.toString());
       
       if (isCreator) {
         myRooms.push(r);
