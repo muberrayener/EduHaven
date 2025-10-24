@@ -198,9 +198,10 @@ export default function YourRooms({ myRooms }) {
                         <UIButton
                           size="sm"
                           className="bg-green-600 hover:bg-green-700 text-white flex-1 h-9 text-sm"
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleRequest(room._id, user._id, "approve")
-                          }
+                          }}
                         >
                           Approve
                         </UIButton>
@@ -208,9 +209,10 @@ export default function YourRooms({ myRooms }) {
                           size="sm"
                           variant="destructive"
                           className="flex-1 h-9 text-sm"
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleRequest(room._id, user._id, "reject")
-                          }
+                          }}
                         >
                           Reject
                         </UIButton>

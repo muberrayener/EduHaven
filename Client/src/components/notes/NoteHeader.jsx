@@ -1,17 +1,18 @@
 import { Archive, FileText, Plus, Search, Trash2 } from "lucide-react";
-// import { Button } from "../ui/button";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useNoteStore } from "@/stores/useNoteStore";
 
-const NoteHeader = ({
-  createNewNote,
-  searchTerm,
-  setSearchTerm,
-  selectedNote,
-  setStatus,
-  setSelectedNote,
-  status,
-}) => {
+const NoteHeader = ({ createNewNote }) => {
+  const {
+    status,
+    searchTerm,
+    selectedNote,
+    setStatus,
+    setSearchTerm,
+    setSelectedNote,
+  } = useNoteStore();
+
   return (
     <header
       className={`flex justify-between items-center w-full ${
@@ -20,7 +21,6 @@ const NoteHeader = ({
           : "flex-row items-start gap-6 mb-3"
       }`}
     >
-      {/* 🔹 Navigation Tabs */}
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -104,9 +104,9 @@ const NoteHeader = ({
           placeholder="Search notes..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full py-2.5 pl-10 pr-3 border text-sm outline-none"
+          className="w-full py-2.5 pl-10 pr-3 border text-sm outline-none transition-all duration-200 focus:border-[var(--btn)]"
           style={{
-            borderColor: "var(--bg-sec)",
+            borderColor: "var(--bg-ter)",
             borderRadius: "var(--radius)",
             backgroundColor: "var(--bg-sec)",
             color: "var(--txt)",

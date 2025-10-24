@@ -1,19 +1,9 @@
 [![join our group on discord](./Client/public/joinDiscordIcon.png)
 ](https://discord.gg/uZv6ShY345) 
 
-<p align="center">
-  <b>This project is now OFFICIALLY accepted for:</b>
-</p>
-
-<div align="center">
-  <img src="Client/public/gssoc.png" alt="GSSOC" width="50%">
-</div>
-
 # Eduhaven
 
 ![image](https://github.com/user-attachments/assets/970c84bf-ac78-4583-af73-d2b8b4b393b0)
-
-## Overview
 
 **EduHaven** is a platform designed to assist students by providing a productivity-focused environment. It aims to provide a space where students can Learn and grow together by socialising with friends. It incorporates real-time collaboration, task management, analytics, AI-chatbot, note-making, gamification and more.
 
@@ -217,14 +207,12 @@ This project is licensed under the MIT License - see the [LICENSE](./License.md)
 - Special thanks to contributors for their efforts in building **EduHaven**.
 - Inspired by productivity tools and online collaborative platforms.
 
----
-
-## Preventing Backend Cold Starts
-
-The backend is hosted on Render Free Tier and may go to sleep after short inactivity.  
-We;re keeping it alive using [cron-job.org](https://cron-job.org/) to ping the backend every 1 minute.
-For full details, see [`KEEP_ALIVE.md`](KEEP_ALIVE.md).
-
+## Backend info
 - Backend URL: https://eduhaven-backend.onrender.com/
 
-For any further queries, feel free to reach out on our [Discord](https://discord.gg/uZv6ShY345) group. Let’s make learning fun and productive!
+To prevent backend going sleep after short inactivity, we're keeping it alive using [cron-job.org](https://cron-job.org/) to ping the backend every 1 minute.
+For full details, see [`KEEP_ALIVE.md`](KEEP_ALIVE.md).
+
+
+---
+For any further queries, feel free to reach out on [Eduhaven's Discord server](https://discord.gg/uZv6ShY345). Let’s make learning fun and productive!

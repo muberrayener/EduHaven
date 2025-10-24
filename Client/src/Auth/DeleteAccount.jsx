@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../contexts/ToastContext";
 import { Button } from "../components/ui/button";
+import { useUserStore } from "@/stores/userStore";
 
 const Delete = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -12,18 +13,17 @@ const Delete = () => {
   const [otpRequested, setOtpRequested] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [otp, setOtp] = useState("");
-
+  const { user , clearUser} = useUserStore();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // redirect if no token
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    if (!user) {
       toast.info("Please login first");
       navigate("/auth/login");
     }
-  }, [navigate]);
+  }, [user,navigate]);
 
   const handleProceed = () => setShowConfirmModal(true);
 
@@ -75,6 +75,7 @@ const Delete = () => {
       toast.success(data.message || "Account deleted successfully");
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
+      clearUser();
       setTimeout(() => navigate("/"), 1500);
     } catch (e) {
       toast.error(e.response?.data?.error || e.message);

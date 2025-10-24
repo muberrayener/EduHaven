@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import axiosInstance from "@/utils/axios";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/contexts/ToastContext";
@@ -12,6 +12,7 @@ const backendUrl = import.meta.env.VITE_API_URL;
 function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const hasLoggedIn = useRef(false);
 
   const handleGoogleLogin = () => {
     window.location.href = `${backendUrl}/auth/google`;
@@ -26,12 +27,17 @@ function Login() {
   } = useForm();
 
   const onSubmit = async (data) => {
+    if (hasLoggedIn.current) return;
+
     console.log("Form submitted:", data);
     try {
       const url = `/auth/login`;
       const response = await axiosInstance.post(url, data);
       console.log(response.data);
+      
+      hasLoggedIn.current = true;
       reset();
+      
       const { token, refreshToken } = response.data;
 
       if (token) {
@@ -40,10 +46,11 @@ function Login() {
       if (refreshToken) {
         localStorage.setItem("refreshToken", refreshToken);
       }
-
+      window.dispatchEvent(new Event("tokenChanged"));
       toast.success("Login successful! Welcome back.");
       navigate("/");
     } catch (error) {
+      hasLoggedIn.current = false;
       console.error(`Login failed:`, error.response?.data || error.message);
       toast.error(error.response?.data?.error || "An error occurred");
     }
@@ -132,7 +139,7 @@ function Login() {
               {showPassword ? <Eye size={19} /> : <EyeOff size={19} />}
             </Button>
             {errors.Password && (
-              <p className="text-red-600 text-sm mt-1">
+              <p className="text-red-500 text-sm mt-1">
                 {errors.Password.message}
               </p>
             )}
@@ -150,15 +157,15 @@ function Login() {
         <div>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || hasLoggedIn.current}
             variant="default"
             className={`w-full rounded-md py-2 px-4 font-semibold ${
-              isSubmitting
+              isSubmitting || hasLoggedIn.current
                 ? "opacity-50 cursor-not-allowed bg-gray-400"
                 : "bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600"
             }`}
           >
-            {isSubmitting ? "Submitting..." : "Log In"}
+            {isSubmitting || hasLoggedIn.current ? "Submitting..." : "Log In"}
           </Button>
         </div>
       </form>

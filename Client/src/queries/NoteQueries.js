@@ -9,6 +9,8 @@ import {
   restoreTrashedNote,
   trashNote,
   updateNote,
+  removeCollaborator,
+  generateShareLink,
 } from "@/api/NoteApi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
@@ -54,10 +56,6 @@ export const useCreateNote = () => {
     mutationFn: createNote,
     onSuccess: (newNote) => {
       queryClient.setQueryData(["notes"], (old = []) => [...old, newNote]);
-      queryClient.setQueryData(["archivedNotes"], (old = []) => [
-        ...old,
-        newNote,
-      ]);
     },
     onError: (error) => handleError(error, "Failed to create note"),
   });
@@ -104,24 +102,11 @@ export const useArchiveNote = () => {
   return useMutation({
     mutationFn: archiveNote,
     onSuccess: (updatedNote) => {
-      if (updatedNote.status === "archived") {
-        queryClient.setQueryData(["notes"], (old = []) =>
-          old.filter((note) => note._id !== updatedNote._id)
-        );
-        queryClient.setQueryData(["archivedNotes"], (old = []) => [
-          ...old,
-          updatedNote,
-        ]);
-      } else if (updatedNote.status === "active") {
-        queryClient.setQueryData(["archivedNotes"], (old = []) =>
-          old.filter((note) => note._id !== updatedNote._id)
-        );
-        queryClient.setQueryData(["notes"], (old = []) => [
-          ...old,
-          updatedNote,
-        ]);
-      }
+      // Invalidate and refetch both queries to ensure data consistency
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      queryClient.invalidateQueries({ queryKey: ["archivedNotes"] });
 
+      // Also update the individual note cache
       queryClient.setQueryData(["notes", updatedNote._id], updatedNote);
     },
     onError: (error) => handleError(error, "Failed to archive/unarchive note"),
@@ -161,3 +146,28 @@ export const useRestoreTrashedNote = () => {
     onError: (error) => handleError(error, "Failed to restore note"),
   });
 };
+
+export const useRemoveCollaborator = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: removeCollaborator,
+    onSuccess: (_, { noteId, collaboratorId }) => {
+      toast.success("Collaborator removed successfully!");
+    },
+    onError: (error) => handleError(error, "Failed to remove collaborator"),
+  });
+};
+
+export const useGenerateShareLink = () =>
+  useMutation({
+    mutationFn: (noteId) => generateShareLink(noteId),
+    onSuccess: (data) => {
+      toast.success("Share link generated successfully");
+    },
+    onError: (error) => {
+      console.error("Error generating share link:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to generate share link"
+      );
+    },
+  });

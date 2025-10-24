@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export default function RoomCard({ room, onDelete, showCategory, loading }) {
+export default function RoomCard({ room, onDelete, showCategory, loading, onRoomNotFound, isJoinedRoom = false }) {
   const [isPinned, setIsPinned] = useState(false);
   const [joinStatus, setJoinStatus] = useState(null); // 'member', 'pending', 'none'
   const navigate = useNavigate();
@@ -38,9 +38,17 @@ export default function RoomCard({ room, onDelete, showCategory, loading }) {
       axiosInstance
         .get(`/session-room/${room._id}/join-status`)
         .then((res) => setJoinStatus(res.data.status))
-        .catch(() => setJoinStatus(null));
+        .catch((error) => {
+          // Check if it's a 404 error (room not found)
+          if (error.response?.status === 404) {
+            if (onRoomNotFound) {
+              onRoomNotFound(room._id);
+            }
+          }
+          setJoinStatus(null);
+        });
     }
-  }, [room]);
+  }, [room, onRoomNotFound]);
 
   // Poll join-status so UI updates after creator approves without manual refresh
   useEffect(() => {
@@ -54,7 +62,18 @@ export default function RoomCard({ room, onDelete, showCategory, loading }) {
         .then((res) => {
           if (!canceled) setJoinStatus(res.data.status);
         })
-        .catch(() => {});
+        .catch((error) => {
+          // Check if it's a 404 error (room not found)
+          if (error.response?.status === 404) {
+            if (onRoomNotFound && !canceled) {
+              onRoomNotFound(room._id);
+            }
+            // Stop polling if room is deleted
+            if (intervalId) {
+              clearInterval(intervalId);
+            }
+          }
+        });
     };
 
     // initial immediate fetch to sync
@@ -71,7 +90,7 @@ export default function RoomCard({ room, onDelete, showCategory, loading }) {
       if (intervalId) clearInterval(intervalId);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [room?._id]);
+  }, [room?._id, onRoomNotFound]);
 
   const handleJoin = async () => {
     if (loading) return;
@@ -289,7 +308,15 @@ export default function RoomCard({ room, onDelete, showCategory, loading }) {
       {room.description && <p className="txt-dim mb-4">{room.description}</p>}
 
       {/* Join/Request Button Logic using joinStatus from backend */}
-      {room.isPrivate ? (
+      {isJoinedRoom ? (
+        <Button
+          onClick={handleJoin}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          <Activity className="w-5 h-5" />
+          Enter Room
+        </Button>
+      ) : room.isPrivate ? (
         joinStatus === "member" ? (
           <Button
             onClick={handleJoin}

@@ -1,19 +1,20 @@
 import { useState, useEffect } from "react";
 import { User } from "lucide-react";
 import { Link } from "react-router-dom";
-import Ai from "./AiChatbot.jsx";
+import AiChatbot from "./AiChatbot";
 import PinnedLinks from "./PinnedLinks.jsx";
 import Slogan from "./Slogan.jsx";
 import OnlineUsers from "./OnlineUsers.jsx";
 import Calculator from "./Calculator.jsx";
+import { useUserStore } from "@/stores/userStore.js";
 
 function NavBar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [, setSelectedId] = useState(""); // for AI, do not remove
-
+  const {user}=useUserStore();
+  
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) setIsLoggedIn(true);
+    if (user) setIsLoggedIn(true);
   }, []);
 
   return (
@@ -22,7 +23,7 @@ function NavBar() {
       <Slogan />
       <div className="flex items-center gap-4">
         {isLoggedIn && <OnlineUsers />}
-        <Ai onShowId={setSelectedId} />
+        <AiChatbot onShowId={setSelectedId} />
         <Calculator />
         {!isLoggedIn && (
           <Link

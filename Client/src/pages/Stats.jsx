@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
-import { useUserProfile, fetchUserStats } from "@/contexts/UserProfileContext";
 import NotLogedInPage from "@/components/NotLogedInPage";
 import ProfileCard from "../components/stats/ProfileCard/ProfileCard";
 import MonthlyLevel from "../components/stats/MonthlyLevel";
@@ -13,10 +11,11 @@ import Test from "../components/stats/Test.jsx";
 import AdCard from "@/components/AdCard";
 import axiosInstance from "@/utils/axios";
 import UserRoomsCard from "@/components/session/UserRoomsCard.jsx";
+import { useUserStore, fetchUserStats } from "@/stores/userStore";
 
 const Stats = ({ isCurrentUser = false }) => {
   const { userId } = useParams();
-  const { user: currentUser, fetchUserDetails } = useUserProfile();
+  const { user: currentUser } = useUserStore();
   const [userStats, setUserStats] = useState(null);
   const [myRooms, setMyRooms] = useState([]);
   const [userRooms, setUserRooms] = useState([]);
@@ -26,16 +25,8 @@ const Stats = ({ isCurrentUser = false }) => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        if (isCurrentUser) {
-          const token = localStorage.getItem("token");
-          if (!token) {
-            setFetched(true);
-            return;
-          }
-
-          const decoded = jwtDecode(token);
-          await fetchUserDetails(decoded.id);
-
+        if(isCurrentUser){
+          if(!currentUser)return;
           const { data } = await axiosInstance.get("/session-room");
           setMyRooms(data.myRooms);
 
@@ -92,7 +83,7 @@ const Stats = ({ isCurrentUser = false }) => {
     };
 
     fetchStats();
-  }, [isCurrentUser, userId, currentUser, fetchUserDetails]);
+  }, [isCurrentUser, userId, currentUser]);
 
   if (fetched && isCurrentUser && !currentUser) {
     return <NotLogedInPage />;

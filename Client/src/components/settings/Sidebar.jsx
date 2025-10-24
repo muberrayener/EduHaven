@@ -11,14 +11,14 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import ConfirmLogoutModal from "../ConfirmLogoutModal";
-import { useUserProfile } from "@/contexts/UserProfileContext";
 import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/stores/userStore";
 
 const Sidebar = ({ user, activeTab, setActiveTab }) => {
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const { isBasicInfoComplete, isEduSkillsComplete } = useUserProfile();
+  const { isBasicInfoComplete, isEduSkillsComplete } = useUserStore();
 
   const tabs = [
     {
@@ -60,21 +60,21 @@ const Sidebar = ({ user, activeTab, setActiveTab }) => {
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 variant={activeTab === tab.key ? "default" : "ghost"}
+
                 className={`group flex items-center justify-between p-3 rounded-lg text-md w-full text-nowrap transition relative ${
-                  activeTab === tab.key
-                    ? "bg-[var(--btn)] text-white"
-                    : tab.incomplete
-                      ? "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                      : "hover:bg-ter"
-                }`}
+                      activeTab === tab.key
+                        ? "bg-[var(--btn)] text-white"
+                        : "hover:bg-ter"
+                    }`} // <-- Removed the "tab.incomplete" red background logic
+
               >
                 <span className="flex items-center gap-1.5">
                   {tab.icon} {tab.label}
                   {tab.incomplete && (
-                    <span className="ml-2 px-2 py-0.5 text-xs font-bold rounded-full bg-red-500 text-white shadow-md">
-                      !
-                    </span>
-                  )}
+                        // This is the new green dot.
+                        // Adjust w-2.5 h-2.5 (width/height) if you want it bigger or smaller.
+                        <span className="ml-2 w-2.5 h-2.5 bg-green-500 rounded-full"></span>
+                      )}
                 </span>
               </Button>
             )
