@@ -1,15 +1,17 @@
-import { useState, useRef, useEffect } from "react";
-import { Send, MoreVertical, Smile, User, Users } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Send, MoreVertical, Smile, User, Users, Dot } from "lucide-react";
 import EmojiPicker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import UseSocketContext from "../../contexts/SocketContext"; // adjust path if needed
 
-function ChatWindow({ selectedUser }) {
+const ChatWindow: React.FC<{ selectedUser: any }> = ({ selectedUser }) => {
   const { socket, isConnected, onlineUsers, user } = UseSocketContext();
 
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [messagesByRoom, setMessagesByRoom] = useState({});
+  const [onlineFriends, setOnlineFriends] = useState([]);
 
   const [showEmoji, setShowEmoji] = useState(false);
   const [cursorPosition, setCursorPosition] = useState(0);
@@ -20,45 +22,143 @@ function ChatWindow({ selectedUser }) {
   const textareaRef = useRef(null);
 
   function getRoomId(user1, user2) {
-    return [user1, user2].sort().join("_");
+    // Extract the actual ID values, handling different formats
+    const getId = (user) => {
+      if (!user) return null;
+      if (typeof user === 'string') return user;
+      return user.$oid || user.id || user._id || user;
+    };
+
+    const id1 = getId(user1);
+    const id2 = getId(user2);
+
+    console.log('Creating room ID from:', { id1, id2 });
+    if (!id1 || !id2) {
+      console.warn('Missing user ID when creating room ID');
+      return null;
+    }
+
+    return [id1, id2].sort().join('_');
   }
 
+  // Handle room joining and online status
   useEffect(() => {
-    if (socket && selectedUser && user) {
-      const roomId = getRoomId(user.id, selectedUser.id);
-      socket.emit("join_room", { roomId });
+    if (!socket || !selectedUser || !user) {
+      console.log('Missing required data for joining room:', { socket: !!socket, selectedUser, user });
+      return;
     }
+
+    const roomId = getRoomId(user.id, selectedUser.id);
+    if (!roomId) {
+      console.warn('Failed to generate valid room ID');
+      return;
+    }
+
+    console.log('Joining room:', roomId);
+    socket.emit("join_room", { roomId });
+
+    // Request message history and online friends
+    socket.emit("get_messages", { roomId });
+    socket.emit("get_online_friends");
+
+    // Listen for online status updates
+    const handleOnlineList = (users) => {
+      console.log('Received online users:', users);
+      setOnlineFriends(users);
+    };
+
+    socket.on("online_users_updated", handleOnlineList);
+    socket.on("online_friends_list", handleOnlineList);
+
+    return () => {
+      socket.off("online_users_updated", handleOnlineList);
+      socket.off("online_friends_list", handleOnlineList);
+    };
   }, [socket, selectedUser, user]);
+
+  // Load messages when selecting a user
+  useEffect(() => {
+    if (!selectedUser || !user) {
+      console.log('No user selected or current user missing');
+      return;
+    }
+    console.log('Loading messages for user:', selectedUser);
+    console.log('Current user:', user);
+    
+    const roomId = getRoomId(user.id, selectedUser.id);
+    console.log('Generated roomId:', roomId);
+    console.log('Available messagesByRoom:', messagesByRoom);
+    
+    const existingMessages = messagesByRoom[roomId] || [];
+    console.log('Found messages for room:', existingMessages);
+    
+    setMessages(existingMessages);
+  }, [selectedUser, user, messagesByRoom]);
 
   // Receive real-time messages
   useEffect(() => {
-  if (!socket || !selectedUser) return;
+    if (!socket || !selectedUser || !user) return;
 
-  const roomId = getRoomId(user.id, selectedUser.id); // Consistent shared room ID
+    const roomId = getRoomId(user.id, selectedUser.id);
 
-  const handleReceiveMessage = (data) => {
-    if (data.roomId !== roomId) return; // 🚨 Ignore if it's from another room
+    const handleReceiveMessage = (data) => {
+      console.log('Received message:', data);
+      console.log('Current roomId:', roomId);
+      console.log('Current user:', user?.id);
+      console.log('Selected user:', selectedUser?.id);
 
-    setMessages((prev) => [
-      ...prev,
-      {
+      if (!data.roomId || !data.message) {
+        console.warn('Missing required message data:', data);
+        return;
+      }
+
+      if (data.userId === user?.id) {
+      // 🔥 Ignore messages you sent yourself (already added locally)
+      return;
+      }
+
+      const newMessage = {
         id: data.id || Date.now(),
         text: data.message || data.text,
-        sender: data.userId === user.id ? "me" : "other",
+        sender: data.userId === user?.id ? "me" : "other",
         timestamp: new Date().toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         }),
-      },
-    ]);
-  };
+      };
 
-  socket.on("new_message", handleReceiveMessage);
+      // Log the current state before update
+      console.log('Current messagesByRoom:', messagesByRoom);
+      console.log('Current messages:', messages);
 
-  return () => {
-    socket.off("new_message", handleReceiveMessage);
-  };
-}, [socket, selectedUser, user]);
+      // Store in room-specific storage
+      setMessagesByRoom(prev => {
+        const updated = {
+          ...prev,
+          [data.roomId]: [...(prev[data.roomId] || []), newMessage]
+        };
+        console.log('Updated messagesByRoom:', updated);
+        return updated;
+      });
+
+      // Update current messages if in the same room
+      if (data.roomId === roomId) {
+        console.log('Updating current room messages');
+        setMessages(prev => [...prev, newMessage]);
+      } else {
+        console.log('Message for different room. Expected:', roomId, 'Got:', data.roomId);
+      }
+    };
+
+    socket.on("new_message", handleReceiveMessage);
+
+    // Request message history
+    socket.emit("get_messages", { roomId });
+
+    return () => {
+      socket.off("new_message", handleReceiveMessage);
+    };
+  }, [socket, selectedUser, user]);
 
 
   // Emit typing event when message is being typed
@@ -81,19 +181,48 @@ function ChatWindow({ selectedUser }) {
 }, [message, socket, selectedUser, user]);
 
 
-  // Listen for typing indicator
+  // Listen for typing indicator and message history
   useEffect(() => {
-  if (!socket || !selectedUser) return;
+    if (!socket || !selectedUser) return;
 
-  const handleTyping = (data) => {
-    if (data.userId === selectedUser.id) {
-      setIsTyping(data.isTyping);
-    }
-  };
+    const handleTyping = (data) => {
+      if (data.userId === selectedUser.id) {
+        setIsTyping(data.isTyping);
+      }
+    };
 
-  socket.on("user_typing", handleTyping);
-  return () => socket.off("user_typing", handleTyping);
-}, [socket, selectedUser]);
+    const handleMessageHistory = (data) => {
+      if (!data || !data.roomId) return;
+
+      const formattedMessages = data.messages.map(msg => ({
+        id: msg.id,
+        text: msg.message || msg.text,
+        sender: msg.userId === user?.id ? "me" : "other",
+        timestamp: new Date(msg.timestamp).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      }));
+
+      setMessagesByRoom(prev => ({
+        ...prev,
+        [data.roomId]: formattedMessages
+      }));
+
+      // If this is for the current room, update messages
+      if (data.roomId === getRoomId(user?.id, selectedUser.id)) {
+        setMessages(formattedMessages);
+      }
+    };
+
+    socket.on("user_typing", handleTyping);
+    socket.on("messages_history", handleMessageHistory);
+    
+    return () => {
+      socket.off("user_typing", handleTyping);
+      socket.off("messages_history", handleMessageHistory);
+    };
+  }, [socket, selectedUser, user]);
 
 
   // Auto scroll to bottom
@@ -124,24 +253,28 @@ function ChatWindow({ selectedUser }) {
   }, [showEmoji]);
 
   const handleSendMessage = () => {
-    if (!message.trim() || !selectedUser || !socket) return;
+    if (!message.trim() || !selectedUser || !socket || !user) return;
 
-    const roomId = getRoomId(user.id, selectedUser.id); // 💡 shared roomId
+    const roomId = getRoomId(user.id, selectedUser.id);
 
     const newMessage = {
-      id: Date.now(), // local fallback ID
-      text: message,
-      senderId: user.id,
-      receiverId: selectedUser.id,
-      roomId, // 🧠 include this
+      id: Date.now(),
+      text: message.trim(),
+      sender: "me",
       timestamp: new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
       }),
     };
 
-    // Do not add message locally (optimistic) to avoid duplicate when server echoes.
-    // Emit to server; server will broadcast 'new_message' and listener will append it.
+    // Store the message locally immediately for instant feedback
+    setMessagesByRoom(prev => ({
+      ...prev,
+      [roomId]: [...(prev[roomId] || []), newMessage]
+    }));
+    setMessages(prev => [...prev, newMessage]);
+
+    // Send to server
     socket.emit("send_message", {
       roomId,
       message: message.trim(),
@@ -249,22 +382,42 @@ function ChatWindow({ selectedUser }) {
                 {selectedUser.name}
               </h3>
               <p className="text-xs sm:text-sm txt-dim">
-                {selectedUser.isGroup
-                  ? `${Math.floor(Math.random() * 20) + 5} members`
-                  : selectedUser.isOnline
-                    ? "Online"
-                    : "Last seen recently"}
+                {selectedUser.isGroup ? (
+                  `${Math.floor(Math.random() * 20) + 5} members`
+                ) : (
+                  onlineFriends.some(u => 
+                    u.id === selectedUser.id || 
+                    u.id === selectedUser._id || 
+                    (selectedUser._id && selectedUser._id.$oid === u.id)
+                  ) ? (
+                    <span className="text-green-500">Online</span>
+                  ) : (
+                    "Last seen recently"
+                  )
+                )}
               </p>
             </div>
           </div>
 
           {/* Action Buttons - Responsive sizing */}
           <div className="flex items-center gap-1 sm:gap-2">
-            <button className="p-1.5 sm:p-2 rounded-full hover:opacity-70 transition-colors txt-dim hover:txt">
-              <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
-            {/* TODO: Connect to backend - Add video/voice call functionality */}
-          </div>
+              <button
+                onClick={() => {
+                  const isOnline = onlineFriends.some(u => u.id === user?.id);
+                  socket?.emit("set_online_status", isOnline ? "offline" : "online");
+                }}
+                className="p-1.5 sm:p-2 rounded-full hover:opacity-70 transition-colors txt-dim hover:txt"
+                title={onlineFriends.some(u => u.id === user?.id) ? "Set Offline" : "Set Online"}
+              >
+                <Dot className={`w-4 h-4 sm:w-5 sm:h-5 ${onlineFriends.some(u => u.id === user?.id) ? 'text-green-500' : 'text-gray-400'}`} />
+              </button>
+              <button
+                className="p-1.5 sm:p-2 rounded-full hover:opacity-70 transition-colors txt-dim hover:txt"
+                title="More Options"
+              >
+                <MoreVertical className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </div>
         </div>
       </div>
 

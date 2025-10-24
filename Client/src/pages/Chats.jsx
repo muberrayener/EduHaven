@@ -1,50 +1,120 @@
 import UserList from "../components/chats/userlist";
 import ChatWindow from "../components/chats/chatwindow";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { useState } from "react";
-
-// Dummy data for demonstration
-const dummyUsers = [
-  {
-    id: 1,
-    name: "Alex Johnson",
-    avatar: "/public/userProfile.webp",
-    lastMessage: "Hey, are you ready for the study session?",
-    timestamp: "2 min ago",
-    isOnline: true,
-    unreadCount: 2,
-  },
-  {
-    id: 2,
-    name: "Sarah Chen",
-    avatar: null,
-    lastMessage: "Thanks for helping with the math problem!",
-    timestamp: "15 min ago",
-    isOnline: true,
-    unreadCount: 0,
-  },
-  {
-    id: 3,
-    name: "Mike Wilson",
-    avatar: "/public/userProfile.webp",
-    lastMessage: "Can we reschedule our meeting?",
-    timestamp: "1 hour ago",
-    isOnline: false,
-    unreadCount: 1,
-  },
-  {
-    id: 4,
-    name: "Emma Davis",
-    avatar: null,
-    lastMessage: "Great job on the presentation today!",
-    timestamp: "3 hours ago",
-    isOnline: false,
-    unreadCount: 0,
-  },
-];
+import { useState, useEffect } from "react";
+import { useFriends } from "@/queries/friendQueries";
+import UseSocketContext from "../contexts/SocketContext";
 
 function Chats() {
   const [selectedUser, setSelectedUser] = useState(null);
+  const [users, setUsers] = useState([]);
+  const { data: friends = [] } = useFriends();
+
+  useEffect(() => {
+    if (!friends || friends.length === 0) return;
+    const mapped = friends.map((f) => {
+      const id = f.id ?? (f._id && (f._id.$oid || f._id)) ?? null;
+      const name = f.FirstName ? `${f.FirstName} ${f.LastName || ""}`.trim() : f.name || f.Username || f.Email || "New User";
+      return {
+        id,
+        _id: f._id,
+        name,
+        avatar: f.ProfilePicture || null,
+        lastMessage: "",
+        timestamp: "",
+        isOnline: f.isOnline ?? false,
+        unreadCount: 0,
+      };
+    });
+    setUsers(mapped);
+  }, [friends]);
+
+  const { socket, user: currentUser } = UseSocketContext();
+
+  // Handle online users updates
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleOnlineUsers = (onlineUsers) => {
+      setUsers((prev) => prev.map(user => {
+        const isOnline = onlineUsers.some(online => 
+          online.id === user.id || online.id === user._id || (user._id && user._id.$oid === online.id)
+        );
+        return { ...user, isOnline };
+      }));
+    };
+
+    socket.on("online_users_updated", handleOnlineUsers);
+    return () => socket.off("online_users_updated", handleOnlineUsers);
+  }, [socket]);
+
+  // Listen for incoming messages globally and update unread counts when the
+  // conversation is not currently open.
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (data) => {
+      try {
+        if (!data) return;
+        // ignore messages sent by current user
+        if (currentUser && data.userId === currentUser.id) return;
+
+        const senderId = data.userId;
+        const messageText = data.message || data.text || "";
+        const ts = data.timestamp ? new Date(data.timestamp) : new Date();
+        const timestamp = ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+        // build roomId for currently opened conversation (if any)
+        const currentRoomId = selectedUser && currentUser ? [currentUser.id, selectedUser.id].sort().join("_") : null;
+        if (currentRoomId && data.roomId === currentRoomId) {
+          // conversation open – no unread increment (ChatWindow will show the message)
+          return;
+        }
+
+        setUsers((prev) => {
+          const idx = prev.findIndex(
+            (u) => u.id === senderId || u._id === senderId || (u._id && u._id.$oid === senderId)
+          );
+
+          if (idx > -1) {
+            const updated = [...prev];
+            updated[idx] = {
+              ...updated[idx],
+              lastMessage: messageText,
+              timestamp,
+              unreadCount: (updated[idx].unreadCount || 0) + 1,
+            };
+            const [item] = updated.splice(idx, 1);
+            return [item, ...updated];
+          }
+
+          // If sender not in list, add to top
+          const newEntry = {
+            id: senderId,
+            _id: senderId,
+            name: data.username || "New User",
+            avatar: data.profileImage || null,
+            lastMessage: messageText,
+            timestamp,
+            isOnline: false,
+            unreadCount: 1,
+          };
+
+          return [newEntry, ...prev];
+        });
+      } catch (e) {
+        console.error("Error handling new_message in Chats.jsx", e);
+      }
+    };
+
+    socket.on("new_message", handleNewMessage);
+    return () => socket.off("new_message", handleNewMessage);
+  }, [socket, currentUser, selectedUser]);
+
+  const handleSelectUser = (user) => {
+    setSelectedUser(user);
+    setUsers((prev) => prev.map((u) => (u.id === (user.id ?? user._id) ? { ...u, unreadCount: 0 } : u)));
+  };
 
   return (
     <div
@@ -56,11 +126,7 @@ function Chats() {
       <PanelGroup autoSaveId="chat-panel" direction="horizontal">
         {/* Sidebar */}
         <Panel minSize={15} defaultSize={25} maxSize={40}>
-          <UserList
-            users={dummyUsers}
-            selectedUser={selectedUser}
-            onSelectUser={setSelectedUser}
-          />
+          <UserList users={users} selectedUser={selectedUser} onSelectUser={handleSelectUser} />
         </Panel>
 
         {/* Draggable Resizer */}

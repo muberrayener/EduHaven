@@ -131,21 +131,43 @@ const initializeSocket = (io) => {
       });
     });
 
-    // Handle manual online status (clients to set their online staus in settings);
-    // socket.on("set_online_status", (status) => {
-    //   if (status === "offline") {
-    //     onlineUsers.delete(socket.userId);
-    //   } else {
-    //     onlineUsers.set(socket.userId, socket.id);
-    //   }
-    //   broadcastOnlineList()
-    // });
+    // Handle manual online status (clients can set their online status in settings)
+    socket.on("set_online_status", (status) => {
+      console.log(`User ${socket.name} setting status to:`, status);
+      
+      if (status === "offline") {
+        onlineUsers.delete(socket.userId);
+        userSockets.set(socket.id, {
+          ...userSockets.get(socket.id),
+          status: "offline"
+        });
+      } else {
+        onlineUsers.set(socket.userId, socket.id);
+        userSockets.set(socket.id, {
+          ...userSockets.get(socket.id),
+          status: "online"
+        });
+      }
+      
+      broadcastOnlineList();
+    });
 
-    // // Handle getting online friends
-    // socket.on("get_online_friends", () => {
-    //   // You can integrate this with your existing friends system
-    //   socket.emit("online_friends_list", Array.from(onlineUsers.keys()));
-    // });
+    // Handle getting online friends
+    socket.on("get_online_friends", () => {
+      const onlineFriends = Array.from(onlineUsers.entries()).map(
+        ([userId, socketId]) => {
+          const userInfo = userSockets.get(socketId) || {};
+          return {
+            id: userId,
+            name: userInfo.name || "Unknown",
+            profileImage: userInfo.profileImage || null,
+            status: userInfo.status || "online"
+          };
+        }
+      );
+      
+      socket.emit("online_friends_list", onlineFriends);
+    });
   });
 
   console.log("Socket.IO initialized successfully");
