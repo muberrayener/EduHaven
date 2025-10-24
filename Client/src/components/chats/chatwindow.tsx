@@ -32,7 +32,6 @@ const ChatWindow: React.FC<{ selectedUser: any }> = ({ selectedUser }) => {
     const id1 = getId(user1);
     const id2 = getId(user2);
 
-    console.log('Creating room ID from:', { id1, id2 });
     if (!id1 || !id2) {
       console.warn('Missing user ID when creating room ID');
       return null;
@@ -44,7 +43,7 @@ const ChatWindow: React.FC<{ selectedUser: any }> = ({ selectedUser }) => {
   // Handle room joining and online status
   useEffect(() => {
     if (!socket || !selectedUser || !user) {
-      console.log('Missing required data for joining room:', { socket: !!socket, selectedUser, user });
+      console.log('Missing required data for joining room:');
       return;
     }
 
@@ -54,7 +53,7 @@ const ChatWindow: React.FC<{ selectedUser: any }> = ({ selectedUser }) => {
       return;
     }
 
-    console.log('Joining room:', roomId);
+    console.log('Joining room:');
     socket.emit("join_room", { roomId });
 
     // Request message history and online friends
@@ -63,7 +62,7 @@ const ChatWindow: React.FC<{ selectedUser: any }> = ({ selectedUser }) => {
 
     // Listen for online status updates
     const handleOnlineList = (users) => {
-      console.log('Received online users:', users);
+      console.log('Received online users:');
       setOnlineFriends(users);
     };
 
@@ -82,15 +81,11 @@ const ChatWindow: React.FC<{ selectedUser: any }> = ({ selectedUser }) => {
       console.log('No user selected or current user missing');
       return;
     }
-    console.log('Loading messages for user:', selectedUser);
-    console.log('Current user:', user);
+    console.log('Loading messages for user:');
     
     const roomId = getRoomId(user.id, selectedUser.id);
-    console.log('Generated roomId:', roomId);
-    console.log('Available messagesByRoom:', messagesByRoom);
     
     const existingMessages = messagesByRoom[roomId] || [];
-    console.log('Found messages for room:', existingMessages);
     
     setMessages(existingMessages);
   }, [selectedUser, user, messagesByRoom]);
@@ -102,13 +97,9 @@ const ChatWindow: React.FC<{ selectedUser: any }> = ({ selectedUser }) => {
     const roomId = getRoomId(user.id, selectedUser.id);
 
     const handleReceiveMessage = (data) => {
-      console.log('Received message:', data);
-      console.log('Current roomId:', roomId);
-      console.log('Current user:', user?.id);
-      console.log('Selected user:', selectedUser?.id);
 
       if (!data.roomId || !data.message) {
-        console.warn('Missing required message data:', data);
+        console.warn('Missing required message data:');
         return;
       }
 
@@ -127,17 +118,12 @@ const ChatWindow: React.FC<{ selectedUser: any }> = ({ selectedUser }) => {
         }),
       };
 
-      // Log the current state before update
-      console.log('Current messagesByRoom:', messagesByRoom);
-      console.log('Current messages:', messages);
-
       // Store in room-specific storage
       setMessagesByRoom(prev => {
         const updated = {
           ...prev,
           [data.roomId]: [...(prev[data.roomId] || []), newMessage]
         };
-        console.log('Updated messagesByRoom:', updated);
         return updated;
       });
 
@@ -146,7 +132,7 @@ const ChatWindow: React.FC<{ selectedUser: any }> = ({ selectedUser }) => {
         console.log('Updating current room messages');
         setMessages(prev => [...prev, newMessage]);
       } else {
-        console.log('Message for different room. Expected:', roomId, 'Got:', data.roomId);
+        console.log('Message for different room.');
       }
     };
 
