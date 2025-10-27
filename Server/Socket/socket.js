@@ -6,6 +6,10 @@ import { handleMessageOperations } from "./messageHandlers.js";
 const onlineUsers = new Map();
 const userSockets = new Map();
 let connections = {};
+// In-memory store for unread counts
+// Structure: { recipientId: { senderId: count } }
+const unreadCounts = {};
+
 let timeOnline = {};
 
 const authenticateSocket = (socket, next) => {
@@ -27,6 +31,19 @@ const authenticateSocket = (socket, next) => {
   } catch (err) {
     console.log("Socket authentication error:", err.message);
     next(new Error("Authentication error"));
+  }
+};
+
+// Helper function to send all stored unread counts for a user to their socket.
+const sendUserUnreadCounts = (socket) => {
+  if (!socket || !socket.userId) return;
+  const userUnreadCounts = unreadCounts[socket.userId];
+  if (userUnreadCounts) {
+    for (const senderId in userUnreadCounts) {
+      if (userUnreadCounts[senderId] > 0) {
+        socket.emit("unread_count_updated", { senderId, unreadCount: userUnreadCounts[senderId] });
+      }
+    }
   }
 };
 
@@ -61,7 +78,8 @@ const initializeSocket = (io) => {
     broadcastOnlineList();
 
     handleRoomOperations(socket, io, onlineUsers);
-    handleMessageOperations(socket, io);
+    // Pass unreadCounts and onlineUsers to the message handler
+    handleMessageOperations(socket, io, { unreadCounts, onlineUsers });
     // handleVoiceOperations(socket, io);
 
     // webrtc handlers:----------------------------------------------
@@ -84,6 +102,27 @@ const initializeSocket = (io) => {
     socket.on("signal", (toId, message) => {
       io.to(toId).emit("signal", socket.id, message);
     });
+
+    // When a user opens a chat and reads the messages
+    socket.on("mark_as_read", ({ senderId, recipientId }) => {
+      if (unreadCounts[recipientId] && unreadCounts[recipientId][senderId]) {
+        unreadCounts[recipientId][senderId] = 0;
+
+        // Confirm back to the user that it was reset
+        socket.emit("unread_count_updated", {
+          senderId: senderId,
+          unreadCount: 0,
+        });
+      }
+    });
+
+    // Listen for a client request to get all their unread counts.
+    socket.on("request_initial_unread_counts", () => {
+      sendUserUnreadCounts(socket);
+    });
+
+    // On connection, send the user all their current unread counts
+    sendUserUnreadCounts(socket);
 
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${socket.name}`);

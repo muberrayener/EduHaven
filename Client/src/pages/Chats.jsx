@@ -8,6 +8,8 @@ import UseSocketContext from "../contexts/SocketContext";
 function Chats() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [users, setUsers] = useState([]);
+  // State to temporarily hold unread counts that arrive before the friends list
+  const [pendingUnreadCounts, setPendingUnreadCounts] = useState({});
   const { data: friends = [] } = useFriends();
 
   useEffect(() => {
@@ -23,11 +25,14 @@ function Chats() {
         lastMessage: "",
         timestamp: "",
         isOnline: f.isOnline ?? false,
-        unreadCount: 0,
+        // Apply any pending counts that have already arrived
+        unreadCount: pendingUnreadCounts[id] || 0,
       };
     });
     setUsers(mapped);
-  }, [friends]);
+    // Clear pending counts once they are applied
+    setPendingUnreadCounts({});
+  }, [friends]); // Note: pendingUnreadCounts is not a dependency here to avoid re-renders.
 
   const { socket, user: currentUser } = UseSocketContext();
 
@@ -63,26 +68,18 @@ function Chats() {
         const messageText = data.message || data.text || "";
         const ts = data.timestamp ? new Date(data.timestamp) : new Date();
         const timestamp = ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-        // build roomId for currently opened conversation (if any)
-        const currentRoomId = selectedUser && currentUser ? [currentUser.id, selectedUser.id].sort().join("_") : null;
-        if (currentRoomId && data.roomId === currentRoomId) {
-          // conversation open – no unread increment (ChatWindow will show the message)
-          return;
-        }
-
+        
         setUsers((prev) => {
           const idx = prev.findIndex(
             (u) => u.id === senderId || u._id === senderId || (u._id && u._id.$oid === senderId)
           );
-
+          
           if (idx > -1) {
             const updated = [...prev];
             updated[idx] = {
               ...updated[idx],
               lastMessage: messageText,
               timestamp,
-              unreadCount: (updated[idx].unreadCount || 0) + 1,
             };
             const [item] = updated.splice(idx, 1);
             return [item, ...updated];
@@ -111,9 +108,54 @@ function Chats() {
     return () => socket.off("new_message", handleNewMessage);
   }, [socket, currentUser, selectedUser]);
 
+  // Listen for unread count updates from the server
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUnreadUpdate = ({ senderId, unreadCount }) => {
+      setUsers((prevUsers) => {
+        // If the user list is already populated, update it directly.
+        if (prevUsers.length > 0) {
+          return prevUsers.map((user) =>
+            user.id === senderId || user._id === senderId || (user._id && user._id.$oid === senderId)
+              ? { ...user, unreadCount }
+              : user
+          );
+        }
+        // If the user list is not yet populated, store the count as pending.
+        setPendingUnreadCounts((prevCounts) => ({
+          ...prevCounts,
+          [senderId]: unreadCount,
+        }));
+        return prevUsers; // Return the empty array for now
+      });
+    };
+
+    socket.on("unread_count_updated", handleUnreadUpdate);
+    return () => socket.off("unread_count_updated", handleUnreadUpdate);
+  }, [socket]);
+
+  // When the component mounts or socket becomes available, ask the server for all current unread counts.
+  // This ensures counts are correct even when navigating back to this page.
+  useEffect(() => {
+    if (socket && currentUser) {
+      socket.emit("request_initial_unread_counts");
+    }
+  }, [socket, currentUser]);
+
   const handleSelectUser = (user) => {
     setSelectedUser(user);
-    setUsers((prev) => prev.map((u) => (u.id === (user.id ?? user._id) ? { ...u, unreadCount: 0 } : u)));
+    // Reset count locally for immediate UI feedback
+    const userId = user.id ?? user._id;
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, unreadCount: 0 } : u)));
+
+    // Notify server to reset the count
+    if (socket && currentUser) {
+      socket.emit("mark_as_read", {
+        senderId: userId, // The user whose chat is being read
+        recipientId: currentUser.id, // The current user who is reading the chat
+      });
+    }
   };
 
   return (
